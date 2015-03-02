@@ -1,9 +1,5 @@
-/**
- * Copyright (C) 2015 
- *
- *  @author Mary Carmen Ríos Ramírez
- *  @author Laura Lizeth Heredia Manzano 
- *  @author Carlos Iván Castillo Sepúlveda
+/*
+ * Copyright (C) 2015 carcasti
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.server;
+package net;
 
-public class WorkerServer {
+/**
+ *
+ * @author carcasti
+ */
+public interface UDPConnector {
     
 }
