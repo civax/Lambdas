@@ -20,7 +20,67 @@
  */
 package net;
 
+import java.util.ArrayList;
 
+/**
+ * Esta es la clase del server Principal, sirve como receptor de pticiones de los clientes y reparte la carga de trabajo entre los objetos Worker server que tenga disponibles
+ * @see WorkerServer
+ * 
+ */
 public class MainServer {
+    private final UDPConnector connector;
+    private final int LOCAL_PORT;
+    private Image workedImage;
+    private int target_port;
+    private String target_ip;
+    private ArrayList<Worker> workers;
+    public void registerWorker(int port,String ip){
+        workers.add(
+                    new Worker(port,ip)
+        );
+    }
+    private class Worker{
+
+        public Worker(int port, String ip) {
+            this.port = port;
+            this.ip = ip;
+        }
+        
+        int port;
+        String ip;
+    }
+    public MainServer(int LOCAL_PORT) {
+        this.LOCAL_PORT = LOCAL_PORT;
+        connector=new UDPConnector(LOCAL_PORT);
+    }
     
+    /**
+     * este metodo se encarga de realizar el envio de manera asincrona
+     */
+    public void sendImage(){
+        new Thread( () -> {
+            connector.send(workedImage, target_port, target_ip);
+            
+        }).start();
+    }
+
+
+    private  boolean listening;
+    /**
+     * Este metodo termina el proceso de recepcion de mensajes
+     */
+    public void stopListening(){
+        listening=false;
+    }
+    /**
+     * Este metodo recibe imagenes mientras la bandera este activada y las almacena en una cola de imagenes
+     */
+    public synchronized void receiveImages(){
+        listening=true;
+        new Thread( () -> {
+            while(listening){
+                workedImage=connector.receive();
+            }
+        }).start();
+    }
 }

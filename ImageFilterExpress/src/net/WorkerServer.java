@@ -21,5 +21,53 @@
 package net;
 
 public class WorkerServer {
+    private final UDPConnector connector;
+    private final int LOCAL_PORT;
+    private Image workedImage;
+    private int target_port;
+    private String target_ip;
     
+    public WorkerServer(int LOCAL_PORT) {
+        this.LOCAL_PORT = LOCAL_PORT;
+        connector=new UDPConnector(LOCAL_PORT);
+    }
+    
+    /**
+     * este metodo se encarga de realizar el envio de manera asincrona
+     */
+    public void sendImage(){
+        new Thread( () -> {
+            connector.send(workedImage, target_port, target_ip);
+            setBusy(false);
+            
+        }).start();
+    }
+
+    public boolean isBusy() {
+        return busy;
+    }
+
+    public void setBusy(boolean busy) {
+        this.busy = busy;
+    }
+    private  boolean listening;
+    /**
+     * Este metodo termina el proceso de recepcion de mensajes
+     */
+    public void stopListening(){
+        listening=false;
+    }
+    private boolean busy;
+    /**
+     * Este metodo recibe imagenes mientras la bandera este activada y las almacena en una cola de imagenes
+     */
+    public synchronized void receiveImages(){
+        listening=true;
+        new Thread( () -> {
+            while(listening){
+                workedImage=connector.receive();
+                setBusy(true);
+            }
+        }).start();
+    }
 }

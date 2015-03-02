@@ -23,6 +23,9 @@ package net;
 import java.io.Serializable;
 import net.util.Clock;
 
+/**
+ * Esta clase abstrae la imagen que sera procesada
+ */
 public class Image implements Serializable{
     	
 	private static final long serialVersionUID = 6482853459949281988L;

@@ -18,8 +18,10 @@ package net;
 
 /**
  *
- * @author carcasti
+ * @param <T> tipo de objeto que sera enviado
+ * @since 2015
  */
-public class NewClass {
-    
+public interface Connector <T>{
+    public void send(T object,int port,String ip);
+    public T receive();
 }
