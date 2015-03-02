@@ -20,6 +20,10 @@
  */
 package net;
 
+/**
+ * Esta clase realiza el procesamiento de las imagenes, y la aplicacion de filtros, recibe partes de la imagen original del main server, las procesa y las regresa al server de origen
+ * @see MainServer
+ */
 public class WorkerServer {
     private final UDPConnector connector;
     private final int LOCAL_PORT;
