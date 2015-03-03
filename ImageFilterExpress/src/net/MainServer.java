@@ -28,6 +28,11 @@ import java.util.ArrayList;
  * 
  */
 public class MainServer {
+    /**
+     * En el metodo main se inicializa el server
+     * @param args  0 corresponde al puerto por el que estara escuchando el server
+     *              1 corresponde al puerto con el que se estara comunicando
+     */
     public static void main(String args[]){
         
         int localPort = Integer.parseInt(args[0]);
