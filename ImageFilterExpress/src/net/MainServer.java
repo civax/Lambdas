@@ -28,8 +28,15 @@ import java.util.ArrayList;
  * 
  */
 public class MainServer {
+    public static void main(String args[]){
+        
+        int localPort = Integer.parseInt(args[0]);
+	int workerPort = Integer.parseInt(args[1]);
+	new MainServer(localPort,workerPort).receiveImages();    
+    }
     private final UDPConnector connector;
     private final int LOCAL_PORT;
+    private final int WORKER_PORT;
     private Image workedImage;
     private int target_port;
     private String target_ip;
@@ -49,8 +56,10 @@ public class MainServer {
         int port;
         String ip;
     }
-    public MainServer(int LOCAL_PORT) {
+    public MainServer(int LOCAL_PORT, int WORKER_PORT) {
         this.LOCAL_PORT = LOCAL_PORT;
+        this.WORKER_PORT=WORKER_PORT;
+        target_ip="localhost";
         connector=new UDPConnector(LOCAL_PORT);
     }
     
@@ -59,7 +68,7 @@ public class MainServer {
      */
     public void sendImage(){
         new Thread( () -> {
-            connector.send(workedImage, target_port, target_ip);
+            connector.send(workedImage, WORKER_PORT, target_ip);
             
         }).start();
     }
@@ -80,6 +89,7 @@ public class MainServer {
         new Thread( () -> {
             while(listening){
                 workedImage=connector.receive();
+                sendImage();
             }
         }).start();
     }

@@ -25,14 +25,22 @@ package net;
  * @see MainServer
  */
 public class WorkerServer {
+    public static void main(String args[]){
+        
+        int localPort = Integer.parseInt(args[0]);
+	int serverPort = Integer.parseInt(args[1]);
+	new WorkerServer(localPort,serverPort).receiveImages();    
+    }
     private final UDPConnector connector;
     private final int LOCAL_PORT;
     private Image workedImage;
-    private int target_port;
-    private String target_ip;
+    private final String target_ip;
+    private final int SERVER_PORT;
     
-    public WorkerServer(int LOCAL_PORT) {
+    public WorkerServer(int LOCAL_PORT,int SERVER_PORT) {
         this.LOCAL_PORT = LOCAL_PORT;
+        this.SERVER_PORT = SERVER_PORT;
+        target_ip="localhost";
         connector=new UDPConnector(LOCAL_PORT);
     }
     
@@ -41,7 +49,7 @@ public class WorkerServer {
      */
     public void sendImage(){
         new Thread( () -> {
-            connector.send(workedImage, target_port, target_ip);
+            connector.send(workedImage, SERVER_PORT, target_ip);
             setBusy(false);
             
         }).start();
@@ -70,6 +78,8 @@ public class WorkerServer {
         new Thread( () -> {
             while(listening){
                 workedImage=connector.receive();
+                //una vez que la imagen sea rocesada devolver el mensaje
+                sendImage();
                 setBusy(true);
             }
         }).start();
