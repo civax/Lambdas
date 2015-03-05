@@ -16,17 +16,45 @@
  */
 package net.client.ui;
 
+
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+
 /**
  *
  * @author carcasti
  */
-public class ClientUI extends javax.swing.JFrame {
+public class ClientUI extends javax.swing.JFrame implements ActionListener{
 
     /**
      * Creates new form ClientUI
      */
+    JButton b1;
+    JLabel l1;
+    JFileChooser fc;
+   
     public ClientUI() {
         initComponents();
+        fc = new JFileChooser();
+        jButton1.addActionListener(this);
+        jButton2.addActionListener(this);
+        jButton3.addActionListener(this);
+        jButton4.addActionListener(this);
+ 
+        this.setLocationRelativeTo(null);
+        
     }
 
     /**
@@ -38,22 +66,69 @@ public class ClientUI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
+        jButton4 = new javax.swing.JButton();
+        background = new javax.swing.JLabel();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Image Filter Express");
+        setName("clienteUiForm"); // NOI18N
+        setSize(new java.awt.Dimension(650, 600));
+        getContentPane().setLayout(null);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/client/ui/images/Exit.png")));
+        jButton1.setToolTipText("Exit");
+        jButton1.setActionCommand("btnExit");
+        getContentPane().add(jButton1);
+        jButton1.setBounds(510, 460, 85, 80);
 
-        pack();
+        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/client/ui/images/Load.png")));
+        jButton2.setToolTipText("Load image");
+        jButton2.setActionCommand("btnLoad");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(jButton2);
+        jButton2.setBounds(400, 460, 85, 80);
+
+        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/client/ui/images/Modify.png")));
+        jButton3.setToolTipText("Edit Image");
+        getContentPane().add(jButton3);
+        jButton3.setBounds(290, 460, 85, 80);
+
+        jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/client/ui/images/Search.png")));
+        jButton4.setToolTipText("Search Image");
+        jButton4.setActionCommand("btnSearch");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(jButton4);
+        jButton4.setBounds(180, 460, 85, 80);
+
+        background.setIcon(new javax.swing.ImageIcon(getClass().getResource("/net/client/ui/images/image1.jpg")));
+        background.setText("jLabel1");
+        getContentPane().add(background);
+        background.setBounds(0, 0, 650, 600);
+
+        setBounds(0, 0, 650, 600);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        // TODO add your handling code here:
+            
+    }//GEN-LAST:event_jButton4ActionPerformed
+   
+    
     /**
      * @param args the command line arguments
      */
@@ -88,7 +163,42 @@ public class ClientUI extends javax.swing.JFrame {
             }
         });
     }
-
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel background;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == jButton4) {
+            FileNameExtensionFilter filter = new FileNameExtensionFilter("JPG y PNG","jpg","png");
+            fc.setFileFilter(filter);
+            int returnVal = fc.showOpenDialog(this);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                try{
+                    File file = fc.getSelectedFile();
+                    EditorUI editor = new EditorUI();
+                    editor.setVisible(true);
+                    editor.icon = new ImageIcon(file.toString());
+                    Icon img = new ImageIcon(editor.icon.getImage().getScaledInstance(editor.jLabel1.getWidth(), editor.jLabel1.getHeight(), Image.SCALE_DEFAULT));
+                    editor.jLabel1.setText(null);
+                    editor.jLabel1.setIcon( img );
+
+                }catch(Exception ex){
+                    JOptionPane.showMessageDialog(null, "Error opening the image "+ ex); 
+                }
+                //This is where a real application would open the file.    
+            } 
+        if (e.getSource() == jButton1) {}
+        if (e.getSource() == jButton2) {}
+        if (e.getSource() == jButton3) {}
+        
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+    }
 }
+
