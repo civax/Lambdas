@@ -32,6 +32,15 @@ public class Image implements Serializable{
         private String message;
 	private final Clock clock;
 	private String id;
+        private String status;
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
         
 	@Override
 	public String toString() {
