@@ -32,9 +32,24 @@ public class WorkerServer {
      */
     public static void main(String args[]){
         
-        int localPort = Integer.parseInt(args[0]);
-	int serverPort = Integer.parseInt(args[1]);
-	new WorkerServer(localPort,serverPort).receiveImages();    
+        int localPort = 5001;//Integer.parseInt(args[0]);
+	int mainServerPort = 5000;//Integer.parseInt(args[1]);
+        final WorkerServer worker;
+        try{
+	 worker=new WorkerServer(localPort,mainServerPort);  
+         new Thread(
+                ()->{
+                   // while(mainserver.listening){
+                    
+                        worker.receiveImages();
+                        
+                   // }
+                }
+         ).start();
+        
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
     private final UDPConnector connector;
     private final int LOCAL_PORT;
@@ -82,9 +97,15 @@ public class WorkerServer {
         listening=true;
         new Thread( () -> {
             while(listening){
+            System.out.println("[ACTION: ] waiting images...");
                 workedImage=connector.receive();
+                workedImage.setStatus("WORKER");
                 //una vez que la imagen sea rocesada devolver el mensaje
-                sendImage();
+                System.out.println("[INFO: ] image received ");
+                        System.out.println("[ACTION: ] sending images...");
+                        sendImage();
+                        System.out.println("[INFO: ] image sent");
+                        System.out.println();
                 setBusy(true);
             }
         }).start();

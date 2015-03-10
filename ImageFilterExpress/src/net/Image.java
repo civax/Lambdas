@@ -64,7 +64,7 @@ public class Image implements Serializable{
 		return clock.getTime();
 	}
 	public void setClock(int clock) {
-		this.clock.sendAction();
+		this.clock.receiveAction(clock);
 	}
 	
 	public String getId() {

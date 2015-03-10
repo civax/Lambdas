@@ -34,29 +34,22 @@ public class MainServer {
      *              1 corresponde al puerto con el que se estara comunicando
      */
     public static void main(String args[]){
-        MainServer mainserver = null;
+        final MainServer mainserver;
         try{
-        int localPort = Integer.parseInt(args[0]);
-	int workerPort = Integer.parseInt(args[1]);
+        int localPort = 5000;//Integer.parseInt(args[0]);
+	int workerPort = 5001;//Integer.parseInt(args[1]);
 	 mainserver=new MainServer(localPort,workerPort);  
-        while(mainserver.listening){
-                mainserver.receiveImages();
-                switch(mainserver.workedImage.getStatus()) 
-                {
-                    case "Client":
-                        mainserver.sendImage(mainserver.CLIENT_PORT);
-                        break;
-                    case "Worker":
-                        mainserver.sendImage(mainserver.WORKER_PORT);
-                        break;
-                     
+         new Thread(
+                ()->{
+                   // while(mainserver.listening){
+                    
+                        mainserver.receiveImages();       
+                   // }
                 }
-                
-                
-            }
+         ).start();
+        
         }catch(Exception e){
             e.printStackTrace();
-            System.out.println(mainserver.workedImage);
         }
     }
     private final UDPConnector connector;
@@ -85,7 +78,7 @@ public class MainServer {
     public MainServer(int LOCAL_PORT, int WORKER_PORT) {
         this.LOCAL_PORT = LOCAL_PORT;
         this.WORKER_PORT = WORKER_PORT;
-        this.CLIENT_PORT = 1521;
+        this.CLIENT_PORT = 3000;
         target_ip="localhost";
         connector=new UDPConnector(LOCAL_PORT);
         listening=true;
@@ -112,11 +105,33 @@ public class MainServer {
     /**
      * Este metodo recibe imagenes mientras la bandera este activada y las almacena en una cola de imagenes
      */
-    public synchronized void receiveImages(){
+    public  void receiveImages(){
         listening=true;
         new Thread( () -> {
+            while(true){
+            System.out.println("[ACTION: ] waiting images...");
             workedImage=connector.receive();
+            System.out.println("[INFO: ] image received: "+workedImage.getStatus());
+                        if(workedImage!=null){
+                        switch(workedImage.getStatus()) 
+                        {
+                            case "CLIENT":
+                                System.out.println("[ACTION: ] sending image to worker");
+                                sendImage(WORKER_PORT);
+                                System.out.println("[INFO: ] image sent to worker");
+                                System.out.println();
+                                break;
+                            case "WORKER":
+                                System.out.println("[ACTION: ] sending image to client");
+                                sendImage(CLIENT_PORT);
+                                System.out.println("[INFO: ] image sent to client");
+                                System.out.println();
+                                break;
+
+                        }   
+                        }
             
+            }
         }).start();
     }
 }

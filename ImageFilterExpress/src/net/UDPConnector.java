@@ -71,15 +71,18 @@ public class UDPConnector implements Connector<Image>{
 
     @Override
     public Image receive() {
-        final DatagramSocket socket;
         Image receivedImage = null;
-        try {
+        try(
+                DatagramSocket socket = new DatagramSocket(LOCAL_PORT);
+            ) {
+            
             //conectando a socket local para realizar lectura/recepcion de informacion
-            socket = new DatagramSocket(LOCAL_PORT);
+            
             SimpleDateFormat format = new SimpleDateFormat();
             byte[] buf = new byte[BUFFER_SIZE];
             DatagramPacket packet = new DatagramPacket(buf, BUFFER_SIZE);
 
+            
             socket.receive(packet);
             byte byteArr[]= packet.getData();
             //se extrae la informacion del socket
@@ -89,7 +92,8 @@ public class UDPConnector implements Connector<Image>{
             
             receivedImage.setClock(clock.getTime());
           
-            System.out.println(format.format(new Date())+receivedImage);
+            System.out.println("["+format.format(new Date())+"] "+receivedImage);
+        
 	} catch (SocketException ex) {
             Logger.getLogger(UDPConnector.class.getName()).log(Level.SEVERE, "Error de coneccion al socket", ex);
         }catch (IOException | ClassNotFoundException e1) {

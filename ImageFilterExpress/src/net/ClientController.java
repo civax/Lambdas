@@ -20,7 +20,9 @@
  */
 package net;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class ClientController {
     private final UDPConnector connector;
@@ -30,10 +32,41 @@ public class ClientController {
     private Image image;
     private ArrayList<Image> imageQueue;
     
-    
+    public static void main(String args[]){
+        
+        int localPort = 3000;//Integer.parseInt(args[0]);
+	int mainServerPort = 5000;//Integer.parseInt(args[1]);
+        final ClientController client;
+        try{
+	 client=new ClientController(localPort);
+         client.target_port=5000;
+         
+         new Thread(
+                ()->{
+                   // while(mainserver.listening){
+                        Image image =new Image("first image", 0, "1");
+                        image.setStatus("CLIENT");
+                        SimpleDateFormat format = new SimpleDateFormat();
+                        System.out.println("["+format.format(new Date())+"] "+image);
+                        client.setImage(image);
+                        System.out.println("[ACTION: ] sending image to server");
+                        client.sendImage();
+                        System.out.println("[INFO: ] image sent to server");
+                        
+                        client.receiveImages();
+                   // }
+                }
+         ).start();
+        
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
     public ClientController(int LOCAL_PORT) {
         this.LOCAL_PORT = LOCAL_PORT;
         connector=new UDPConnector(LOCAL_PORT);
+        imageQueue = new ArrayList<>();
+        
     }
     
     /**
@@ -57,9 +90,12 @@ public class ClientController {
     public synchronized void receiveImages(){
         listening=true;
         new Thread( () -> {
-            while(listening){
+            //while(listening){
+            System.out.println("[ACTION: ] waiting images...");
                 imageQueue.add(connector.receive());
-            }
+            System.out.println("[INFO: ] image sent to client");
+            System.out.println();
+            //}
         }).start();
     }
     /**
