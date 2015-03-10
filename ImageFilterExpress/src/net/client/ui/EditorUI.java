@@ -29,6 +29,7 @@ public class EditorUI extends javax.swing.JFrame {
      */
     public EditorUI() {
         initComponents();
+        this.setLocationRelativeTo(null);
     }
 
     /**

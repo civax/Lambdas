@@ -86,7 +86,9 @@ public class UDPConnector implements Connector<Image>{
             ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(byteArr, 0, byteArr.length) );
             receivedImage= (Image) is.readObject();
             clock.receiveAction(receivedImage.getClock());
+            
             receivedImage.setClock(clock.getTime());
+          
             System.out.println(format.format(new Date())+receivedImage);
 	} catch (SocketException ex) {
             Logger.getLogger(UDPConnector.class.getName()).log(Level.SEVERE, "Error de coneccion al socket", ex);

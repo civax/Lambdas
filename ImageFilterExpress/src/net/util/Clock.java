@@ -23,6 +23,11 @@ package net.util;
 import java.io.Serializable;
 
 public class Clock implements Serializable{
+
+    @Override
+    public String toString() {
+        return "Clock{" + "time=" + time + '}';
+    }
         /**
          * contador interno
          */

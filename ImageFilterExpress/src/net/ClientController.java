@@ -98,5 +98,9 @@ public class ClientController {
     public void setTarget_ip(String target_ip) {
         this.target_ip = target_ip;
     }
+
+    public void setImage(Image image) {
+        this.image = image;
+    }
     
 }

@@ -34,14 +34,35 @@ public class MainServer {
      *              1 corresponde al puerto con el que se estara comunicando
      */
     public static void main(String args[]){
-        
+        MainServer mainserver = null;
+        try{
         int localPort = Integer.parseInt(args[0]);
 	int workerPort = Integer.parseInt(args[1]);
-	new MainServer(localPort,workerPort).receiveImages();    
+	 mainserver=new MainServer(localPort,workerPort);  
+        while(mainserver.listening){
+                mainserver.receiveImages();
+                switch(mainserver.workedImage.getStatus()) 
+                {
+                    case "Client":
+                        mainserver.sendImage(mainserver.CLIENT_PORT);
+                        break;
+                    case "Worker":
+                        mainserver.sendImage(mainserver.WORKER_PORT);
+                        break;
+                     
+                }
+                
+                
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.println(mainserver.workedImage);
+        }
     }
     private final UDPConnector connector;
     private final int LOCAL_PORT;
     private final int WORKER_PORT;
+    private final int CLIENT_PORT;
     private Image workedImage;
     private int target_port;
     private String target_ip;
@@ -63,18 +84,20 @@ public class MainServer {
     }
     public MainServer(int LOCAL_PORT, int WORKER_PORT) {
         this.LOCAL_PORT = LOCAL_PORT;
-        this.WORKER_PORT=WORKER_PORT;
+        this.WORKER_PORT = WORKER_PORT;
+        this.CLIENT_PORT = 1521;
         target_ip="localhost";
         connector=new UDPConnector(LOCAL_PORT);
+        listening=true;
+        
     }
     
     /**
      * este metodo se encarga de realizar el envio de manera asincrona
      */
-    public void sendImage(){
+    public void sendImage(int PORT){
         new Thread( () -> {
-            connector.send(workedImage, WORKER_PORT, target_ip);
-            
+            connector.send(workedImage, PORT, target_ip);
         }).start();
     }
 
@@ -92,10 +115,8 @@ public class MainServer {
     public synchronized void receiveImages(){
         listening=true;
         new Thread( () -> {
-            while(listening){
-                workedImage=connector.receive();
-                sendImage();
-            }
+            workedImage=connector.receive();
+            
         }).start();
     }
 }
