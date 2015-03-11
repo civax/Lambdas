@@ -85,12 +85,12 @@ public class MainServer {
         this.CLIENT_PORT = 3000;
         try {
             InetAddress IP=InetAddress.getLocalHost();
-            System.out.println("Main Server Listening at PORT: "+this.LOCAL_PORT+" host: "+IP.toString());
+            System.out.println("Main Server Listening at PORT: "+this.LOCAL_PORT+" host: "+IP.getHostAddress());
         } catch (UnknownHostException ex) {
             Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, "Error getting IP adress", ex);
         }
         
-        target_ip="localhost";//148.201.188.204
+        //target_ip="localhost";//148.201.188.204
         connector=new UDPConnector(LOCAL_PORT);
         listening=true;
         
@@ -102,6 +102,8 @@ public class MainServer {
     public void sendImage(int PORT){
         new Thread( () -> {
             connector.send(workedImage, PORT, target_ip);
+            System.out.println("[INFO: ] image sent to "+target_ip+":"+PORT);
+            System.out.println();
         }).start();
     }
 
@@ -128,17 +130,13 @@ public class MainServer {
                         {
                             case "CLIENT":
                                 System.out.println("[ACTION: ] sending image to worker");
-                                //target_ip="192.168.0.102";//192.168.0.104
+                                target_ip="192.168.56.1";//192.168.0.104
                                 sendImage(WORKER_PORT);
-                                System.out.println("[INFO: ] image sent to worker");
-                                System.out.println();
                                 break;
                             case "WORKER":
                                 System.out.println("[ACTION: ] sending image to client");
-                                //target_ip="192.168.0.102";//
+                                target_ip="localhost";//
                                 sendImage(CLIENT_PORT);
-                                System.out.println("[INFO: ] image sent to client");
-                                System.out.println();
                                 break;
 
                         }   
