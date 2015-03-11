@@ -20,7 +20,11 @@
  */
 package net;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Esta es la clase del server Principal, sirve como receptor de pticiones de los clientes y reparte la carga de trabajo entre los objetos Worker server que tenga disponibles
@@ -79,7 +83,14 @@ public class MainServer {
         this.LOCAL_PORT = LOCAL_PORT;
         this.WORKER_PORT = WORKER_PORT;
         this.CLIENT_PORT = 3000;
-        target_ip="localhost";
+        try {
+            InetAddress IP=InetAddress.getLocalHost();
+            System.out.println("Main Server Listening at PORT: "+this.LOCAL_PORT+" host: "+IP.toString());
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, "Error getting IP adress", ex);
+        }
+        
+        target_ip="localhost";//148.201.188.204
         connector=new UDPConnector(LOCAL_PORT);
         listening=true;
         
@@ -117,12 +128,14 @@ public class MainServer {
                         {
                             case "CLIENT":
                                 System.out.println("[ACTION: ] sending image to worker");
+                                //target_ip="192.168.0.102";//192.168.0.104
                                 sendImage(WORKER_PORT);
                                 System.out.println("[INFO: ] image sent to worker");
                                 System.out.println();
                                 break;
                             case "WORKER":
                                 System.out.println("[ACTION: ] sending image to client");
+                                //target_ip="192.168.0.102";//
                                 sendImage(CLIENT_PORT);
                                 System.out.println("[INFO: ] image sent to client");
                                 System.out.println();
