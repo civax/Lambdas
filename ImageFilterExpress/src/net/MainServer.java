@@ -109,6 +109,7 @@ public class MainServer {
     
     /**
      * este metodo se encarga de realizar el envio de manera asincrona
+     * @param PORT puerto al que se enviara la imagen con la que se esta trabajando
      */
     public void sendImage(int PORT){
         new Thread( () -> {
