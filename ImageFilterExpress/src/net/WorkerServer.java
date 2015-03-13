@@ -20,6 +20,11 @@
  */
 package net;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Esta clase realiza el procesamiento de las imagenes, y la aplicacion de filtros, recibe partes de la imagen original del main server, las procesa y las regresa al server de origen
  * @see MainServer
@@ -60,7 +65,13 @@ public class WorkerServer {
     public WorkerServer(int LOCAL_PORT,int SERVER_PORT) {
         this.LOCAL_PORT = LOCAL_PORT;
         this.SERVER_PORT = SERVER_PORT;
-        target_ip="localhost";
+        try {
+            InetAddress IP=InetAddress.getLocalHost();
+            System.out.println("Main Server Listening at PORT: "+this.LOCAL_PORT+" host: "+IP.toString());
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(MainServer.class.getName()).log(Level.SEVERE, "Error getting IP adress", ex);
+        }
+        target_ip="192.168.0.103";
         connector=new UDPConnector(LOCAL_PORT);
     }
     

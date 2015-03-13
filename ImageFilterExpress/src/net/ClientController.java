@@ -23,7 +23,9 @@ package net;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-
+/**
+ * Esta Clase contiene la lógica de control para las instancias de un cliente
+ */
 public class ClientController {
     private final UDPConnector connector;
     private final int LOCAL_PORT;
@@ -62,6 +64,10 @@ public class ClientController {
             e.printStackTrace();
         }
     }
+    /**
+     * Contructor de Client Controller
+     * @param LOCAL_PORT Puerto que utilizará el proceso para escuchar procesos externos
+     */
     public ClientController(int LOCAL_PORT) {
         this.LOCAL_PORT = LOCAL_PORT;
         connector=new UDPConnector(LOCAL_PORT);
@@ -134,7 +140,10 @@ public class ClientController {
     public void setTarget_ip(String target_ip) {
         this.target_ip = target_ip;
     }
-
+    /**
+     * Método setter para el objeto imagen que será eviado para su posterior procesamiento
+     * @param image Objeto imagen que será enviada para su procesamiento
+     */
     public void setImage(Image image) {
         this.image = image;
     }

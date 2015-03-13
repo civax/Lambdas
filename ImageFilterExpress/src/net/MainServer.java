@@ -64,6 +64,12 @@ public class MainServer {
     private int target_port;
     private String target_ip;
     private ArrayList<Worker> workers;
+    /**
+     * Este método permite registrar un worker en la cola de workers
+     * 
+     * @param port puerto de conexion del worker server
+     * @param ip Dirección IP de conexion del worker server
+     */
     public void registerWorker(int port,String ip){
         workers.add(
                     new Worker(port,ip)
@@ -79,6 +85,11 @@ public class MainServer {
         int port;
         String ip;
     }
+    /**
+     * 
+     * @param LOCAL_PORT puerto por el cual se establecerá comunicacion con procesos externos, puerto de escucha
+     * @param WORKER_PORT puerto de comunicación deel workerserver al que se enviará trabajo
+     */
     public MainServer(int LOCAL_PORT, int WORKER_PORT) {
         this.LOCAL_PORT = LOCAL_PORT;
         this.WORKER_PORT = WORKER_PORT;
@@ -128,14 +139,14 @@ public class MainServer {
                         {
                             case "CLIENT":
                                 System.out.println("[ACTION: ] sending image to worker");
-                                //target_ip="192.168.0.102";//192.168.0.104
+                                target_ip="148.201.186.133";//192.168.0.104
                                 sendImage(WORKER_PORT);
                                 System.out.println("[INFO: ] image sent to worker");
                                 System.out.println();
                                 break;
                             case "WORKER":
                                 System.out.println("[ACTION: ] sending image to client");
-                                //target_ip="192.168.0.102";//
+                                target_ip="localhost";//
                                 sendImage(CLIENT_PORT);
                                 System.out.println("[INFO: ] image sent to client");
                                 System.out.println();

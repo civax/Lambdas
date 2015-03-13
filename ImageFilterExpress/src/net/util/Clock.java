@@ -41,6 +41,7 @@ public class Clock implements Serializable{
         }
         /**
          *  Metodo getter del campo time, obtiene su valor actual
+         * @return el tiempo actual del reloj
          */
 	public int getTime(){
 		return time;
@@ -59,9 +60,10 @@ public class Clock implements Serializable{
 	}
         /**
          * se ejecuta durante la accion de recepcion de mensaje
+         * @param incommingTime Es el tiempo del reloj externo
          */
-	public void receiveAction( int sentValue){
-		time = max(time, sentValue);
+	public void receiveAction( int incommingTime){
+		time = max(time, incommingTime);
 		tick();
 	}
 	/**

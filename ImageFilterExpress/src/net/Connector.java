@@ -17,11 +17,21 @@
 package net;
 
 /**
- *
- * @param <T> tipo de objeto que sera enviado
+ * Esta Interfaz establece los métodos que se utilizarán en las conexiones realizadas en el sistema
+ * @param <T> tipo de objeto que sera enviado en el sistema
  * @since 2015
  */
 public interface Connector <T>{
+    /**
+     * Método para enviar un objecto
+     * @param object Objecto que será enviado
+     * @param port puerto de comunicación con el proceso destino
+     * @param ip dirección ip del proceso destino
+     */
     public void send(T object,int port,String ip);
+    /**
+     * Método de recepción de Objetos 
+     * @return T regresa un objeto que fue recibido desde otro proceso
+     */
     public T receive();
 }
