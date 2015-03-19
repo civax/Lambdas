@@ -63,6 +63,7 @@ public class Process {
         new Thread( () -> {
             //while(listening){
             System.out.println("[ACTION: ] waiting requests...");
+
             Object remoteObject=connector.receive();
             if(remoteObject instanceof Request){
             Request receivedRequest=(Request)remoteObject;
