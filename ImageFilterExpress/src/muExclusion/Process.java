@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static muExclusion.Coordinator.list;
 import net.UDPConnector;
 
 /**
@@ -134,14 +135,14 @@ public class Process {
     /**
      * Este metodo recibe requests mientras la bandera este activada y las almacena en una cola de requests
      */
-    public synchronized void receiveRequest(){
-       
-        new Thread( () -> {
-            System.out.println("[ACTION: ] waiting requests...");
-
-            Object remoteObject=connector.receive();
-            if(remoteObject instanceof Message)
-            {
+    public synchronized void receiveRequest(Object remoteObject){
+//       
+//        new Thread( () -> {
+//            System.out.println("[ACTION: ] waiting requests...");
+//
+//            Object remoteObject=connector.receive();
+//            if(remoteObject instanceof Message)
+//            {
                 Message receivedRequest=(Message)remoteObject;
                 System.out.println("[INFO: ] request received in " + this.Id);
                 //Acción dependiendo del tipo de mensaje
@@ -166,22 +167,14 @@ public class Process {
                         getRelease(receivedRequest);
                         break;    
                 }
-            }
-        }).start();
+//            }
+//        }).start();
     }
     
     public void sendRequest(Message req,int port,String ip){
         new Thread( () -> {
             connector.send(req, port, ip);
         }).start();
-    }
-    
-    public void open(){
-        
-    }
-    
-    public void close(){
-        
     }
     
     /***
@@ -229,44 +222,44 @@ public class Process {
        }                 
     }
     
-    private static Process registerProcess() throws IOException {
-        listProcess =  new ArrayList<>();
-        Process p=null;
-        BufferedWriter out = null;
-        BufferedReader in =  null;
-        try  
-        {
-            FileReader fread = new FileReader("Processes.txt");
-            in =  new BufferedReader(fread);
-            String aux = "";
-            
-            while ((aux = in.readLine()) != null) {
-                String st[] =  aux.split(" ");
-              //  listProcess.add(new Process(st[0], st[1], st[2], Integer.parseInt(st[3])));
-            }
-            in.close();
-            
-            //String id,String file,String IP,int port
-            FileWriter fstream = new FileWriter("Processes.txt", true); //true tells to append data.            
-            out = new BufferedWriter(fstream);
-            int number = listProcess.size() +1;
-           // p =  new Process("p" + number,"Conf" + number + ".properties", "localhost", 1000+number);
-            
-            out.write("p" + number + " Conf" + number + ".properties localhost " + (1000+number));
-            out.close();           
+    private void registerProcess(Object remoteObject) {
+        if (listening) {
+            new Thread(() -> {
+                System.out.println("[ " + Id + " ACTION: ] Registry Card received, processing...");
+                RegistryCard card = (RegistryCard) remoteObject;
+                Process receivedProcess = cardToProcess(card);
+                if (!listProcess.contains(receivedProcess) && (listProcess.size() <= waitfor)) {
+                    addTarget(receivedProcess);
+                    System.out.println("[ " + Id + " ][" + format.format(new Date()) + "] Process " + receivedProcess.Id + " added to work group");
+                    System.out.println("# of processes in the group: " + listProcess.size() + " waiting for: " + waitfor);
+                    if (isSyncher) {
+                        syncGroup(cloneList(listProcess), receivedProcess.IP, receivedProcess.PORT);
+                    }
+                }
+                if (!(listProcess.size() < waitfor)) {
+                    System.out.println("# of processes quota reached: " + listProcess.size() + " stop waiting for processes");
+                    stopListening();
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    System.out.println("[ " + Id + " ][" + format.format(new Date()) + "] Sending request...");
+                    Message req1 = request();
+                    listProcess.stream().filter(
+                            (p) -> (!this.equals(p))
+                    ).forEach(
+                            (p) -> {
+                                sendRequest(req1, p.PORT, p.IP);
+                            }
+                    );
+                }
+            }).start();
+        } else {
+            System.out.println("# of processes quota reached: " + listProcess.size() + " no more processes required");
         }
-        catch (IOException e)
-        {
-            System.err.println("Error: " + e.getMessage());
-        }
-        finally
-        {
-            if(out != null) {
-                out.close();
-            }
-        }
-        return p;
     }
+
     
     public void addTarget(Process p){
         listProcess.add(p);
@@ -297,28 +290,10 @@ public class Process {
                 Object remoteObject=connector.receive();
                 //si se recibe un registro válido se continua el registro en un hilo por separado
                 //para permitir al metodo seguir escuchando por más request
-                    if(remoteObject instanceof RegistryCard){
-                        if(listening){
-                            new Thread(()->{
-                                System.out.println("[ "+Id+" ACTION: ] Registry Card received, processing...");
-                                RegistryCard card=(RegistryCard)remoteObject;
-                                Process receivedProcess= cardToProcess(card);
-                                if(!listProcess.contains(receivedProcess)&&(listProcess.size()<=waitfor)){
-                                    addTarget(receivedProcess);
-                                    System.out.println("[ "+Id+" ]["+format.format(new Date())+"] Process "+ receivedProcess.Id+" added to work group");
-                                    System.out.println("# of processes in the group: "+listProcess.size() +" waiting for: "+waitfor);
-                                    if(isSyncher){
-                                        syncGroup(cloneList(listProcess), receivedProcess.IP, receivedProcess.PORT);
-                                    }
-                                }
-                                if(!(listProcess.size()<waitfor)){
-                                    System.out.println("# of processes quota reached: "+listProcess.size()+" stop waiting for processes");
-                                    stopListening();
-                                }
-                            }).start();
-                        }
+                if(remoteObject instanceof RegistryCard){
+                   registerProcess(remoteObject); 
                 }else  if(remoteObject instanceof Message){
-                    
+                    receiveRequest(remoteObject);
                 }
 
             }
