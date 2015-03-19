@@ -41,12 +41,14 @@ public class Process {
         this.Id = id;
         this.file = file;
         list =  new ArrayList();
+        listACK =  new ArrayList();
         inCS = false;
         this.IP= ip;
         this.PORT = port;
+        listProcess =  new ArrayList<>();
+        connector=new UDPConnector(port);
         System.out.println("Process "+this.Id+" running at: "+this.IP+":"+this.PORT);
-        //this.receiveRequest()
-        ;
+        this.receiveRequest();
     }
     
     public Message request(){
@@ -80,13 +82,19 @@ public class Process {
                 System.out.println("[INFO: ] request received in " + this.Id);
                 switch (receivedRequest.type){
                     case "R":
+                        System.out.println("Request from " + 
+                                receivedRequest.process + " to " + this.Id);
                         list.add(receivedRequest);
                         sendResponse(receivedRequest);
                         break;
                     case "ACK":
+                        System.out.println("ACK from " + 
+                                receivedRequest.process + " to " + this.Id);
                         saveACK(receivedRequest);
                         break;   
                     case "Release":
+                       System.out.println("Release from " + 
+                                receivedRequest.process + " to " + this.Id);
                         getRelease(receivedRequest);
                         break;    
                 }
@@ -258,10 +266,12 @@ public class Process {
                 listACK.remove(i);
      
             try {
+                this.inCS=true;
                 goToCS();
                 //quita su propia solicitud de su cola
                 list.remove(0);
                 sendRelease(topRequest);
+                this.inCS=false;
                 sendPendingACK();
             } catch (InterruptedException ex) {
                 Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
@@ -299,13 +309,13 @@ public class Process {
         String ip;
         int port;
         for (Process p : listProcess) {
-            if(!p.Id.equals(this.Id)){
+            //if(!p.Id.equals(this.Id)){
                 ip = p.IP;
                 port = p.PORT;
                 Message rel = new Message(this.Id, "Release");
                 rel.setFirstMsg(topRequest);
                 this.sendRequest(rel, port, ip);
-            }
+            //}
         }
     }
 

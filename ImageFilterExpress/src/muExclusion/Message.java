@@ -6,6 +6,7 @@
 
 package muExclusion;
 
+import java.io.Serializable;
 import java.util.Date;
 import net.Sendable;
 import net.util.Clock;
@@ -14,7 +15,7 @@ import net.util.Clock;
  *
  * @author mary
  */
-public class Message implements Comparable<Message>, Sendable{
+public class Message implements Comparable<Message>, Sendable,Serializable{
         String process;
         Date date;
         Clock clock;
