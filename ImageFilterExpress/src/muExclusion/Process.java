@@ -40,18 +40,22 @@ public class Process {
         inCS = false;
         this.ip= ip;
         this.port = port;
-        this.receiveRequest();
+        //this.receiveRequest();
     }
     
     public Request request(){
         //Agregar request a su misma cola
         Request req =  new Request(Id,"R");
         list.add(req);
-        //Enviar request a los demas procesos.
-        for (Process p : listProcess) {
-            if(!this.Id.equals(p.Id))
-                this.sendRequest(req, p.port, p.ip);
-        }
+        listProcess.stream().filter(
+                (p) -> (
+                        !this.Id.equals(p.Id)
+                        )
+                ).forEach(
+                        (p) -> {
+                            this.sendRequest(req, p.port, p.ip);
+                        }
+                );
         return req;
     }
     
