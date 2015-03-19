@@ -52,7 +52,7 @@ public class UDPConnector implements Connector<Image>{
 		clock = new Clock();		
 	}
     private Clock clock;
-    private final int BUFFER_SIZE=1024*5;
+    private final int BUFFER_SIZE=1024;
     @Override
     public void send(Image image, int port, String ip) {
         try {

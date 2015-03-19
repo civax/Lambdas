@@ -54,6 +54,7 @@ public class ClientController {
                         System.out.println("[INFO: ] image sent to server");
                         
                         client.receiveImages();
+                        
                    // }
                 }
          ).start();
@@ -94,7 +95,7 @@ public class ClientController {
             System.out.println("[ACTION: ] waiting images...");
                 imageQueue.add(connector.receive());
             System.out.println("[INFO: ] image sent to client");
-            System.out.println();
+            
             //}
         }).start();
     }
