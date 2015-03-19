@@ -14,7 +14,7 @@ import net.util.Clock;
  *
  * @author mary
  */
-public class Request implements Comparable<Request>, Sendable{
+public class Message implements Comparable<Message>, Sendable{
 
     
         String process;
@@ -22,7 +22,7 @@ public class Request implements Comparable<Request>, Sendable{
         Clock clock;
         String type;
         
-        public Request(String process, String type){
+        public Message(String process, String type){
             this.process = process;
             this.date = new Date();
             this.type = type;
@@ -45,7 +45,7 @@ public class Request implements Comparable<Request>, Sendable{
         }
 
         @Override
-        public int compareTo(Request req) {
+        public int compareTo(Message req) {
             //Son iguales
             if(this.process.equals(req.process) && 
                     this.date.compareTo(req.date)==0)

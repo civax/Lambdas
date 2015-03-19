@@ -26,7 +26,8 @@ public class Process {
     /**
      * Cola de solicitudes
      */
-    List<Request> list;
+    List<Message> list;
+    List<Message> listACK;
     static List<Process> listProcess;
     boolean inCS;
     UDPConnector connector;
@@ -43,9 +44,9 @@ public class Process {
         this.receiveRequest();
     }
     
-    public Request request(){
+    public Message request(){
         //Agregar request a su misma cola
-        Request req =  new Request(Id,"R");
+        Message req =  new Message(Id,"R");
         list.add(req);
         //Enviar request a los demas procesos.
         for (Process p : listProcess) {
@@ -61,50 +62,33 @@ public class Process {
     public synchronized void receiveRequest(){
        
         new Thread( () -> {
-            //while(listening){
             System.out.println("[ACTION: ] waiting requests...");
 
             Object remoteObject=connector.receive();
-            if(remoteObject instanceof Request){
-            Request receivedRequest=(Request)remoteObject;
-            list.add(receivedRequest);
-            
-            System.out.println("[INFO: ] request received in " + this.Id);
-            //Si no esta en la CS enviar mensaje ACK
-            if(!this.inCS){
-                Request req = new Request(this.Id, "ACK");
-                String ip="";
-                int port=-1;
-                
-                for (Process p : listProcess) {
-                    if(p.Id.equals(receivedRequest.process)){
-                        ip = p.ip;
-                        port = p.port;
+            if(remoteObject instanceof Message)
+            {
+                Message receivedRequest=(Message)remoteObject;
+                System.out.println("[INFO: ] request received in " + this.Id);
+                switch (receivedRequest.type){
+                    case "R":
+                        sendResponse(receivedRequest);
                         break;
-                    }
+                    case "ACK":
+                        saveACK(receivedRequest);
+                        break;   
+                    case "Release":
+                        sendResponse(receivedRequest);
+                        break;    
                 }
-            
-                this.sendRequest(req, port, ip);
             }
-            }
-            //}
         }).start();
     }
     
-    public void sendRequest(Request req,int port,String ip){
+    public void sendRequest(Message req,int port,String ip){
         new Thread( () -> {
             connector.send(req, port, ip);
         }).start();
     }
-    
-    public void sendACK(Request req,int port,String ip){
-        new Thread( () -> {
-            connector.send(req, port, ip);
-        }).start();
-    }
-    //public String reply(String rep){
-        
-    //}
     
     public void open(){
         
@@ -170,6 +154,35 @@ public class Process {
         
         Process p = registerProcess();
         p.request();
+        
+    }
+    
+    /***
+     * Enviar respuesta o agregar a la cola de requests
+     * @param receivedRequest 
+     */
+    private void sendResponse(Message receivedRequest) {
+        list.add(receivedRequest);
+        //Si no esta en la CS enviar mensaje ACK
+        if(!this.inCS){
+            Message req = new Message(this.Id, "ACK");
+            String ip="";
+            int port=-1;
+            for (Process p : listProcess) {
+                if(p.Id.equals(receivedRequest.process)){
+                    ip = p.ip;
+                    port = p.port;
+                    break;
+                }
+            }
+            this.sendRequest(req, port, ip);
+        }
+            
+    }
+
+    private void saveACK(Message receivedRequest) {
+        listACK.add(receivedRequest);
+        Message topRequest = list.get(0);
         
     }
 }

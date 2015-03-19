@@ -24,7 +24,7 @@ public class Coordinator {
         list.add(p1);
         list.add(p2);
         list.add(p3);
-        Request req1 = p1.request();
+        Message req1 = p1.request();
         
         for (Process p : list) {
             if(!p.Id.equals(p1.Id))
