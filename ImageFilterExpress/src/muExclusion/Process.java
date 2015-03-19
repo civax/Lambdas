@@ -176,7 +176,9 @@ public class Process {
         }
         return p;
     }
-    
+    public void addTarget(Process p){
+        listProcess.add(p);
+    }
     public static void main(String args[]) throws IOException{
         String processId;
         int port;

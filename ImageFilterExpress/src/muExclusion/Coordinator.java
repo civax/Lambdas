@@ -20,6 +20,12 @@ public class Coordinator {
         Process p1 =  new Process("P1","localhost",1000,null,0);
         Process p2 =  new Process("P2","localhost",1001,null,0);
         Process p3 =  new Process("P3","localhost",1002,null,0);
+        p1.addTarget(p2);
+        p1.addTarget(p3);
+        p2.addTarget(p1);
+        p2.addTarget(p3);
+        p3.addTarget(p1);
+        p3.addTarget(p2);
         list =  new ArrayList<>();
         list.add(p1);
         list.add(p2);
