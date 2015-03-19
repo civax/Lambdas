@@ -11,14 +11,12 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.UDPConnector;
 
 /**
@@ -76,36 +74,20 @@ public class Process {
             System.out.println("[ACTION: ] waiting requests...");
 
             Object remoteObject=connector.receive();
-<<<<<<< HEAD
             if(remoteObject instanceof Message)
             {
                 Message receivedRequest=(Message)remoteObject;
                 System.out.println("[INFO: ] request received in " + this.Id);
                 switch (receivedRequest.type){
                     case "R":
+                        list.add(receivedRequest);
                         sendResponse(receivedRequest);
-=======
-            if(remoteObject instanceof Request){
-            Request receivedRequest=(Request)remoteObject;
-            list.add(receivedRequest);
-            
-            System.out.println("[INFO: ] request received in " + this.Id);
-            //Si no esta en la CS enviar mensaje ACK
-            if(!this.inCS){
-                Request req = new Request(this.Id, "ACK");
-                String ip="";
-                int port=-1;
-                
-                for (Process p : listProcess) {
-                    if(p.Id.equals(receivedRequest.process)){
-                        ip = p.IP;
-                        port = p.PORT;
                         break;
                     case "ACK":
                         saveACK(receivedRequest);
                         break;   
                     case "Release":
-                        sendResponse(receivedRequest);
+                        getRelease(receivedRequest);
                         break;    
                 }
             }
@@ -210,8 +192,6 @@ public class Process {
             System.err.println("Indicar el identificador del proceso [P1,P2,P3]  el puerto [10000-10003] y el host de sincronizacion");
                     
         }
-            
-        
     }
     
     /***
@@ -219,27 +199,141 @@ public class Process {
      * @param receivedRequest 
      */
     private void sendResponse(Message receivedRequest) {
-        list.add(receivedRequest);
+        
         //Si no esta en la CS enviar mensaje ACK
         if(!this.inCS){
             Message req = new Message(this.Id, "ACK");
+            req.firstMsg = new Message(receivedRequest);
+            
             String ip="";
             int port=-1;
+            //Mensaje respondido.
+            receivedRequest.status="ACK";
+            //Buscar ip y puerto del proceso que envio el mensaje
             for (Process p : listProcess) {
                 if(p.Id.equals(receivedRequest.process)){
-                    ip = p.ip;
-                    port = p.port;
+                    ip = p.IP;
+                    port = p.PORT;
                     break;
                 }
             }
+            //Enviar ACK
             this.sendRequest(req, port, ip);
         }
-            
     }
 
+    /***
+     * Guardar ACK recibidos de los diferentes procesos.
+     * @param receivedRequest 
+     */
     private void saveACK(Message receivedRequest) {
         listACK.add(receivedRequest);
-        Message topRequest = list.get(0);
         
+        Message topRequest = new Message(list.get(0));
+        
+        //Si el top request no es el mismo proceso entonces no puede entrar
+        //en la CS
+        if(topRequest.process!= this.Id)
+            return;
+        
+        int num =  listProcess.size();
+        HashMap<String, Integer> listProcessTemp = new HashMap<String, Integer>();
+        
+        for ( int i=0; i< listACK.size();i++) {
+            Message msg =  listACK.get(i);
+            
+            if(!listProcessTemp.containsKey(msg.process) && topRequest.date.equals(msg.firstMsg.date))
+                listProcessTemp.put(msg.process, i);
+            
+            if(listProcessTemp.size()==listProcess.size())
+                break;
+        }
+        
+        //Todos los ACK han sido recibidos, el top en el query es el mismo 
+        //proceso, por lo tanto se puede entrar en la CS
+        if(listProcessTemp.size()==listProcess.size())
+        {
+            //quitar los ACK en el lista de ACK
+            for (int i = listProcessTemp.size()-1; i > -1; i--) 
+                listACK.remove(i);
+     
+            try {
+                goToCS();
+                //quita su propia solicitud de su cola
+                list.remove(0);
+                sendRelease(topRequest);
+                sendPendingACK();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
+    }
+
+    /***
+     * Ejecutar la CS.
+     * @throws InterruptedException 
+     */
+    private void goToCS() throws InterruptedException {
+    //write,update,read
+        int num = 1 + (int)(Math.random() * ((3 - 1) + 1));
+        switch(num){
+            case 1:
+                read();
+                break;
+            case 2:
+                write();
+                break;
+            case 3:
+                update();
+                break;
+        }
+        Thread.sleep(1000);
+    }
+
+    /***
+     * Enviar mensaje de release a todos los procesos.
+     * @param topRequest 
+     */
+    private void sendRelease(Message topRequest) {
+        String ip;
+        int port;
+        for (Process p : listProcess) {
+            if(!p.Id.equals(this.Id)){
+                ip = p.IP;
+                port = p.PORT;
+                Message rel = new Message(this.Id, "Release");
+                rel.setFirstMsg(topRequest);
+                this.sendRequest(rel, port, ip);
+            }
+        }
+    }
+
+    /**
+     * Mensaje de release de parte del proceso que entro en la CS,
+     * este proceso quitara el request en la cola de los procesos que reciban
+     * este mensaje.
+     * @param receivedRequest 
+     */
+    private void getRelease(Message receivedRequest) {
+        int i;
+        for (i = 0; i < list.size(); i++) {
+            Message msg =  list.get(i);
+            if(msg.date.equals(receivedRequest.firstMsg.date) &&
+                    msg.process.equals(receivedRequest.firstMsg.process))
+            break;
+        }
+        
+        list.remove(i);
+    }
+    
+    /***
+     * Enviar ACK pendiendientes despues de salir de la CS.
+     */
+    private void sendPendingACK() {
+        for (Message message : list) {
+            if(message.status.equals("R"))
+                sendResponse(message);
+        }
     }
 }

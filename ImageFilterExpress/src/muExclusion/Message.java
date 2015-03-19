@@ -15,17 +15,18 @@ import net.util.Clock;
  * @author mary
  */
 public class Message implements Comparable<Message>, Sendable{
-
-    
         String process;
         Date date;
         Clock clock;
         String type;
+        String status;
+        Message firstMsg;
         
         public Message(String process, String type){
             this.process = process;
             this.date = new Date();
             this.type = type;
+            this.status = "R";
         }
 
         public String getProcess() {
@@ -61,4 +62,36 @@ public class Message implements Comparable<Message>, Sendable{
 		this.clock.receiveAction(clock);
 	}
         
+        public Message(Message msg) {
+            this.clock = msg.clock;
+            this.date = msg.date;
+            this.process = msg.process;
+            this.status = msg.status;
+            this.type = msg.type;
+            this.firstMsg = msg.firstMsg;
+        }
+        
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public Message getFirstMsg() {
+            return firstMsg;
+        }
+
+        public void setFirstMsg(Message firstMsg) {
+            this.firstMsg = firstMsg;
+        }
     }
