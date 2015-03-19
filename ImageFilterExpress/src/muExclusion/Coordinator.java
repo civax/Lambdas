@@ -17,19 +17,18 @@ public class Coordinator {
     static List<Process> list;
     
     public static void main (String args[]){
-        Process p1 =  new Process("1","Conf1.properties","localhost",1000);
-        Process p2 =  new Process("2","Conf2.properties","localhost",1001);
-        Process p3 =  new Process("3","Conf3.properties","localhost",1002);
+        Process p1 =  new Process("P1","localhost",1000,null,0);
+        Process p2 =  new Process("P2","localhost",1001,null,0);
+        Process p3 =  new Process("P3","localhost",1002,null,0);
         list =  new ArrayList<>();
         list.add(p1);
         list.add(p2);
         list.add(p3);
         Request req1 = p1.request();
         
-        for (Process p : list) {
-            if(!p.Id.equals(p1.Id))
-                p1.sendRequest(req1, p.port, p.ip);
-        }
+        list.stream().filter((p) -> (!p.Id.equals(p1.Id))).forEach((p) -> {
+            p1.sendRequest(req1, p.PORT, p.IP);
+        });
     }
 }
 

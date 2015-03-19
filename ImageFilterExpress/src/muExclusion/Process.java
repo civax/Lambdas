@@ -11,9 +11,14 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 import net.UDPConnector;
 
 /**
@@ -30,17 +35,19 @@ public class Process {
     static List<Process> listProcess;
     boolean inCS;
     UDPConnector connector;
-    String ip;
-    int port;
+    final String IP;
+    final int PORT;
     
-    public Process(String id,String file,String ip,int port){
+    public Process(String id,String ip,int port, String syncIP, int syncPORT){
         this.Id = id;
         this.file = file;
         list =  new ArrayList();
         inCS = false;
-        this.ip= ip;
-        this.port = port;
-        //this.receiveRequest();
+        this.IP= ip;
+        this.PORT = port;
+        System.out.println("Process "+this.Id+" running at: "+this.IP+":"+this.PORT);
+        //this.receiveRequest()
+        ;
     }
     
     public Request request(){
@@ -53,7 +60,7 @@ public class Process {
                         )
                 ).forEach(
                         (p) -> {
-                            this.sendRequest(req, p.port, p.ip);
+                            this.sendRequest(req, p.PORT, p.IP);
                         }
                 );
         return req;
@@ -82,8 +89,8 @@ public class Process {
                 
                 for (Process p : listProcess) {
                     if(p.Id.equals(receivedRequest.process)){
-                        ip = p.ip;
-                        port = p.port;
+                        ip = p.IP;
+                        port = p.PORT;
                         break;
                     }
                 }
@@ -132,7 +139,7 @@ public class Process {
     
     private static Process registerProcess() throws IOException {
         listProcess =  new ArrayList<>();
-        Process p;
+        Process p=null;
         BufferedWriter out = null;
         BufferedReader in =  null;
         try  
@@ -143,15 +150,15 @@ public class Process {
             
             while ((aux = in.readLine()) != null) {
                 String st[] =  aux.split(" ");
-                listProcess.add(new Process(st[0], st[1], st[2], Integer.parseInt(st[3])));
+              //  listProcess.add(new Process(st[0], st[1], st[2], Integer.parseInt(st[3])));
             }
             in.close();
             
-            //String id,String file,String ip,int port
+            //String id,String file,String IP,int port
             FileWriter fstream = new FileWriter("Processes.txt", true); //true tells to append data.            
             out = new BufferedWriter(fstream);
             int number = listProcess.size() +1;
-            p =  new Process("p" + number,"Conf" + number + ".properties", "localhost", 1000+number);
+           // p =  new Process("p" + number,"Conf" + number + ".properties", "localhost", 1000+number);
             
             out.write("p" + number + " Conf" + number + ".properties localhost " + (1000+number));
             out.close();           
@@ -165,15 +172,41 @@ public class Process {
             if(out != null) {
                 out.close();
             }
-            p =  new Process("p1" ,"Conf1.properties", "localhost", 1001);
+           // p =  new Process("p1" ,"Conf1.properties", "localhost", 1001);
         }
         return p;
     }
     
     public static void main(String args[]) throws IOException{
-        
-        Process p = registerProcess();
-        p.request();
+        String processId;
+        int port;
+        InetAddress IP=InetAddress.getLocalHost();
+        String syncIP;
+        int syncPORT;
+        if(args.length==2){
+            try{
+                processId=args[0].toUpperCase();
+                port=Integer.parseInt(args[1]);
+                syncIP=null;
+                syncPORT=0;
+                Process process =  new Process(processId,IP.getHostAddress(),port,syncIP,syncPORT);
+            }catch(Exception e){
+              System.err.println("Indicar el identificador del proceso [P1,P2,P3]  el puerto [10000-10003] y el host de sincronizacion");  
+            }
+            //Process p = registerProcess();
+            //p.request();
+        }else if (args.length==4){
+            processId=args[0].toUpperCase();
+            port=Integer.parseInt(args[1]);
+            syncIP=args[2].toUpperCase();
+            syncPORT=Integer.parseInt(args[3]);
+            Process process =  new Process(processId,IP.getHostAddress(),port,syncIP,syncPORT);
+        }
+        else{
+            System.err.println("Indicar el identificador del proceso [P1,P2,P3]  el puerto [10000-10003] y el host de sincronizacion");
+                    
+        }
+            
         
     }
 }
