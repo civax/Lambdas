@@ -11,10 +11,20 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.UDPConnector;
@@ -36,7 +46,46 @@ public class Process {
     UDPConnector connector;
     final String IP;
     final int PORT;
+    private boolean listening;
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 59 * hash + Objects.hashCode(this.Id);
+        hash = 59 * hash + Objects.hashCode(this.IP);
+        hash = 59 * hash + this.PORT;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Process other = (Process) obj;
+        if (!Objects.equals(this.Id, other.Id)) {
+            return false;
+        }
+        if (!Objects.equals(this.IP, other.IP)) {
+            return false;
+        }
+        if (this.PORT != other.PORT) {
+            return false;
+        }
+        return true;
+    }
     
+    private Process(RegistryCard card){
+        this.Id=card.Id;
+        this.PORT=card.port;
+        this.IP=card.ip;
+        isSyncher=false;
+    }
+    
+    private final boolean isSyncher;
     public Process(String id,String ip,int port, String syncIP, int syncPORT){
         this.Id = id;
         this.file = file;
@@ -48,7 +97,22 @@ public class Process {
         listProcess =  new ArrayList<>();
         connector=new UDPConnector(port);
         System.out.println("Process "+this.Id+" running at: "+this.IP+":"+this.PORT);
-        this.receiveRequest();
+        addTarget(this);
+        startListening(3);
+        try {
+            //sync with already started processes
+            Thread.sleep(500);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        if(syncIP!=null&& syncPORT!=0){
+            isSyncher=false;
+            syncProcess(this, syncIP, syncPORT);
+        }else{
+            isSyncher=true;
+        }
+        
+        //this.receiveRequest();
     }
     
     public Message request(){
@@ -66,7 +130,7 @@ public class Process {
                 );
         return req;
     }
-    
+    private SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
     /**
      * Este metodo recibe requests mientras la bandera este activada y las almacena en una cola de requests
      */
@@ -120,16 +184,49 @@ public class Process {
         
     }
     
+    /***
+     * Actualizar un determinado archivo
+     * 
+     */
     public void update(){
-        
+        write();
+           
     }
     
+     /***
+     * Lee e imprime todas las lineas de un determinado archivo
+     * 
+     */
     public void read(){
+        Path f= Paths.get(file);
         
+        try (
+                Scanner reader = new Scanner(file); 
+                //PrintWriter writter = new PrintWriter(f.toFile())
+            ) {
+            String line = reader.nextLine();
+            while(line != null){
+                line = reader.nextLine();
+                System.out.println(line + "\n");
+            }   
+        }
+       
     }
     
+    /***
+     * Escribir un timestamp en determinado archivo
+     * 
+     */
     public void write(){
-        
+        Path f= Paths.get(file);
+        try (
+                BufferedWriter writter = Files.newBufferedWriter(f, StandardOpenOption.APPEND);
+            ) {
+            String text = "["+Id+"]"+"["+format.format(new Date())+"]";
+            writter.append(text);
+        }catch (IOException ex) {   
+            System.out.println(ex.getMessage());  
+       }                 
     }
     
     private static Process registerProcess() throws IOException {
@@ -174,7 +271,91 @@ public class Process {
     public void addTarget(Process p){
         listProcess.add(p);
     }
-    
+    private int waitfor=3;
+    /**
+     * Inicia el hilo de sincronización con otros procesos con un número variable de procesos a registrar
+     * @param waitfor indica el número de procesos que debe contener la lista de procesos, 
+     *                una vez que se alcanza este número se termina el hilo de registro.
+     */
+    public void startListening(int waitfor){
+        this.waitfor=waitfor;
+        startListening();
+    }
+    public void startListening(){
+        listening=true;
+        listenRequests();
+    }
+    public void stopListening(){
+        listening=false;
+    }
+    private void listenRequests(){
+
+        new Thread( () -> {
+            
+            System.out.println("[ "+Id+" ACTION: ] listening...");
+            while(true){
+                Object remoteObject=connector.receive();
+                //si se recibe un registro válido se continua el registro en un hilo por separado
+                //para permitir al metodo seguir escuchando por más request
+                    if(remoteObject instanceof RegistryCard){
+                        if(listening){
+                            new Thread(()->{
+                                System.out.println("[ "+Id+" ACTION: ] Registry Card received, processing...");
+                                RegistryCard card=(RegistryCard)remoteObject;
+                                Process receivedProcess= cardToProcess(card);
+                                if(!listProcess.contains(receivedProcess)&&(listProcess.size()<=waitfor)){
+                                    addTarget(receivedProcess);
+                                    System.out.println("[ "+Id+" ]["+format.format(new Date())+"] Process "+ receivedProcess.Id+" added to work group");
+                                    System.out.println("# of processes in the group: "+listProcess.size() +" waiting for: "+waitfor);
+                                    if(isSyncher){
+                                        syncGroup(cloneList(listProcess), receivedProcess.IP, receivedProcess.PORT);
+                                    }
+                                }
+                                if(!(listProcess.size()<waitfor)){
+                                    System.out.println("# of processes quota reached: "+listProcess.size()+" stop waiting for processes");
+                                    stopListening();
+                                }
+                            }).start();
+                        }
+                }else  if(remoteObject instanceof Message){
+                    
+                }
+
+            }
+        }).start();
+    }
+    private List<Process> cloneList(List<Process> list){
+        List<Process> cloneList=new ArrayList<>();
+        list.forEach(p->{
+                cloneList.add(p);
+        });
+        return cloneList;
+    }
+    private void sendCard(Process process,String ip, int port){
+        RegistryCard card = processToCard(process);
+        connector.send(card,port , ip);
+    }
+    private void syncProcess(Process process,String syncIP, int syncPort){
+         System.out.println("Synching with: "+syncIP+":"+syncPort);
+        sendCard(process,syncIP,syncPort);
+    }
+    private void syncGroup(List<Process> list,String syncIP, int syncPort){
+        System.out.println("Synching with: "+syncIP+":"+syncPort);
+        list.forEach(
+                p ->{
+                    listProcess.forEach(p2 ->{
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        if(!this.equals(p2))
+                            sendCard(p, p2.IP, p2.PORT);
+                    });
+                    
+                }
+        );
+    }
     public static void main(String args[]) throws IOException{
         String processId;
         int port;
@@ -352,5 +533,13 @@ public class Process {
             if(message.status.equals("R"))
                 sendResponse(message);
         }
+    }
+
+    private Process cardToProcess(RegistryCard card) {
+        return new Process(card);
+    }
+
+    private RegistryCard processToCard(Process process) {
+        return new RegistryCard(process);
     }
 }

@@ -26,7 +26,7 @@ import net.util.Clock;
 /**
  * Esta clase abstrae la imagen que sera procesada
  */
-public class Image implements Serializable,Sendable{
+public class Image implements Sendable{
     	
 	private static final long serialVersionUID = 6482853459949281988L;
         private String message;

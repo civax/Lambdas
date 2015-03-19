@@ -1,9 +1,5 @@
 /*
- * Copyright (C) 2015 
- *
- *  @author Mary Carmen Ríos Ramírez
- *  @author Laura Lizeth Heredia Manzano 
- *  @author Carlos Iván Castillo Sepúlveda
+ * Copyright (C) 2015 CarlosIván
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net;
 
-import java.io.Serializable;
+package muExclusion;
+
+import net.Sendable;
 
 /**
  *
- * Todas las clases que implementen esta interfaz pueden ser enviadas y recibidas via UDP
- * 
+ * @author CarlosIván
  */
-public interface Sendable extends Serializable{
-    
+public class RegistryCard implements Sendable{
+    String Id;
+    int port;
+    String ip;
+    public RegistryCard(Process process){
+        this.Id=process.Id;
+        this.port=process.PORT;
+        this.ip=process.IP;
+    }
 }
