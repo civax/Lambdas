@@ -58,6 +58,7 @@ public class MainServer {
             e.printStackTrace();
         }
     }
+    
     private final UDPConnector connector;
     private final int LOCAL_PORT;
     private final int WORKER_PORT;
@@ -77,6 +78,7 @@ public class MainServer {
                     new Worker(port,ip)
         );
     }
+    
     private class Worker{
 
         public Worker(int port, String ip) {

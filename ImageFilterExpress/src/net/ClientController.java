@@ -56,6 +56,7 @@ public class ClientController {
                         System.out.println("[INFO: ] image sent to server");
                         
                         client.receiveImages();
+                        
                    // }
                 }
          ).start();
@@ -110,7 +111,7 @@ public class ClientController {
                     imageQueue.add(workedImage);
                 }
             System.out.println("[INFO: ] image sent to client");
-            System.out.println();
+            
             //}
         }).start();
     }
