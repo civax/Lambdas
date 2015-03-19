@@ -80,18 +80,22 @@ public class Process {
             {
                 Message receivedRequest=(Message)remoteObject;
                 System.out.println("[INFO: ] request received in " + this.Id);
+                //Acción dependiendo del tipo de mensaje
                 switch (receivedRequest.type){
+                    //Solicitud de acceso a la CS
                     case "R":
                         System.out.println("Request from " + 
                                 receivedRequest.process + " to " + this.Id);
                         list.add(receivedRequest);
                         sendResponse(receivedRequest);
                         break;
+                    //Mensaje de ACK de parte de los otros procesos
                     case "ACK":
                         System.out.println("ACK from " + 
                                 receivedRequest.process + " to " + this.Id);
                         saveACK(receivedRequest);
                         break;   
+                    //Mensaje de release de la CS
                     case "Release":
                        System.out.println("Release from " + 
                                 receivedRequest.process + " to " + this.Id);
@@ -231,7 +235,9 @@ public class Process {
     }
 
     /***
-     * Guardar ACK recibidos de los diferentes procesos.
+     * Guardar ACK recibidos de los diferentes procesos y checar si todos los ACK
+     * han sido recibidos para la solicitud que esta en top y que es del 
+     * proceso actual
      * @param receivedRequest 
      */
     private void saveACK(Message receivedRequest) {
@@ -246,7 +252,8 @@ public class Process {
         
         int num =  listProcess.size();
         HashMap<String, Integer> listProcessTemp = new HashMap<String, Integer>();
-        
+        //Buscar en la lista de ACK recibidas si se tienen todos los ACK
+        //del top request en la lista.
         for ( int i=0; i< listACK.size();i++) {
             Message msg =  listACK.get(i);
             
