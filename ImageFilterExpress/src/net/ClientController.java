@@ -98,7 +98,17 @@ public class ClientController {
         new Thread( () -> {
             //while(listening){
             System.out.println("[ACTION: ] waiting images...");
-                imageQueue.add(connector.receive());
+                
+                Object remoteObject=connector.receive();
+                Image workedImage=null;
+                SimpleDateFormat format = new SimpleDateFormat();
+                if(remoteObject instanceof Image){
+                    workedImage=(Image)remoteObject;
+                    connector.getClock().receiveAction(workedImage.getClock());
+                    workedImage.setClock(connector.getClock().getTime());
+                    System.out.println("["+format.format(new Date())+"] "+workedImage);
+                    imageQueue.add(workedImage);
+                }
             System.out.println("[INFO: ] image sent to client");
             System.out.println();
             //}

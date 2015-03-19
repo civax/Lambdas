@@ -22,7 +22,9 @@ package net;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -131,9 +133,16 @@ public class MainServer {
     public  void receiveImages(){
         listening=true;
         new Thread( () -> {
+            SimpleDateFormat format = new SimpleDateFormat();
             while(true){
             System.out.println("[ACTION: ] waiting images...");
-            workedImage=connector.receive();
+                Object remoteObject=connector.receive();
+                if(remoteObject instanceof Image){
+                    workedImage=(Image)remoteObject;
+                    connector.getClock().receiveAction(workedImage.getClock());
+                    workedImage.setClock(connector.getClock().getTime());
+                    System.out.println("["+format.format(new Date())+"] "+workedImage);
+                }
             System.out.println("[INFO: ] image received: "+workedImage.getStatus());
                         if(workedImage!=null){
                         switch(workedImage.getStatus()) 
@@ -147,7 +156,7 @@ public class MainServer {
                                 break;
                             case "WORKER":
                                 System.out.println("[ACTION: ] sending image to client");
-                                target_ip="localhost";//
+                                target_ip="148.201.185.9";//
                                 sendImage(CLIENT_PORT);
                                 System.out.println("[INFO: ] image sent to client");
                                 System.out.println();

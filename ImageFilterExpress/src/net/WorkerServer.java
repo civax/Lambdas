@@ -22,6 +22,8 @@ package net;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -107,9 +109,20 @@ public class WorkerServer {
     public synchronized void receiveImages(){
         listening=true;
         new Thread( () -> {
+            SimpleDateFormat format = new SimpleDateFormat();
             while(listening){
             System.out.println("[ACTION: ] waiting images...");
-                workedImage=connector.receive();
+                
+                Object remoteObject=connector.receive();
+                if(remoteObject instanceof Image){
+                    workedImage=(Image)remoteObject;
+                    connector.getClock().receiveAction(workedImage.getClock());
+            
+                    workedImage.setClock(connector.getClock().getTime());
+          
+                    System.out.println("["+format.format(new Date())+"] "+workedImage);
+                }
+                
                 workedImage.setStatus("WORKER");
                 //una vez que la imagen sea rocesada devolver el mensaje
                 System.out.println("[INFO: ] image received ");

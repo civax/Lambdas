@@ -35,7 +35,7 @@ import net.util.Clock;
  *
  * esta clase implementa los metodos de coneccion utilizando el protocolo UDP
  */
-public class UDPConnector implements Connector<Image>{
+public class UDPConnector implements Connector<Sendable>{
     private final int LOCAL_PORT;
     private int targetPort;
 
@@ -52,16 +52,19 @@ public class UDPConnector implements Connector<Image>{
 		clock = new Clock();		
 	}
     private Clock clock;
+    public Clock getClock(){
+        return clock;
+    }
     private final int BUFFER_SIZE=1024*5;
     @Override
-    public void send(Image image, int port, String ip) {
+    public void send(Sendable remoteObject, int port, String ip) {
         try {
             InetAddress ia = InetAddress.getByName(ip);
             //Message message = new Message("hola que hay", clock.getValue(), port+"");
             DatagramSocket socket = new DatagramSocket();
             ByteArrayOutputStream byteArr = new ByteArrayOutputStream();
             ObjectOutputStream os = new ObjectOutputStream(byteArr);
-            os.writeObject(image);
+            os.writeObject(remoteObject);
             byte arr [] = byteArr.toByteArray();
             socket.send(new DatagramPacket(arr, arr.length,ia,port));
 	} catch (IOException ex) { 
@@ -70,36 +73,27 @@ public class UDPConnector implements Connector<Image>{
     }
 
     @Override
-    public Image receive() {
-        Image receivedImage = null;
+    public Sendable receive() {
+        Sendable remoteObject = null;
         try(
                 DatagramSocket socket = new DatagramSocket(LOCAL_PORT);
             ) {
             
             //conectando a socket local para realizar lectura/recepcion de informacion
-            
-            SimpleDateFormat format = new SimpleDateFormat();
             byte[] buf = new byte[BUFFER_SIZE];
             DatagramPacket packet = new DatagramPacket(buf, BUFFER_SIZE);
-
-            
             socket.receive(packet);
             byte byteArr[]= packet.getData();
             //se extrae la informacion del socket
             ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(byteArr, 0, byteArr.length) );
-            receivedImage= (Image) is.readObject();
-            clock.receiveAction(receivedImage.getClock());
-            
-            receivedImage.setClock(clock.getTime());
-          
-            System.out.println("["+format.format(new Date())+"] "+receivedImage);
-        
+            remoteObject= (Sendable) is.readObject();
+                   
 	} catch (SocketException ex) {
             Logger.getLogger(UDPConnector.class.getName()).log(Level.SEVERE, "Error de coneccion al socket", ex);
         }catch (IOException | ClassNotFoundException e1) {
             Logger.getLogger(UDPConnector.class.getName()).log(Level.SEVERE, "Error de escritura", e1);
 	}
-        return receivedImage; 
+        return remoteObject; 
     }
     
 }
