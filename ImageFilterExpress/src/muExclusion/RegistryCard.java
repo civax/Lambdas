@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package muExclusion;
 
 import net.Sendable;
@@ -23,13 +22,15 @@ import net.Sendable;
  *
  * @author CarlosIván
  */
-public class RegistryCard implements Sendable{
+public class RegistryCard implements Sendable {
+
     String Id;
     int port;
     String ip;
-    public RegistryCard(Process process){
-        this.Id=process.Id;
-        this.port=process.PORT;
-        this.ip=process.IP;
+
+    public RegistryCard(Process process) {
+        this.Id = process.Id;
+        this.port = process.PORT;
+        this.ip = process.IP;
     }
 }
