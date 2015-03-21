@@ -40,7 +40,7 @@ public class Message implements Comparable<Message>, Sendable,Serializable{
      * el proceso estuvo en la CS y no fue posible enviar la ACK, el status se 
      * mantendra en R
      */
-    String status;
+    boolean ACKsent;
     /***
      * Mensaje original de solicitud de acceso a la CS
      */
@@ -50,7 +50,7 @@ public class Message implements Comparable<Message>, Sendable,Serializable{
         this.process = process;
         this.date = new Date();
         this.type = type;
-        this.status = "R";
+        this.ACKsent = false;
         this.clock = new Clock(1);
     }
 
@@ -96,7 +96,7 @@ public class Message implements Comparable<Message>, Sendable,Serializable{
         this.clock = msg.clock;
         this.date = msg.date;
         this.process = msg.process;
-        this.status = msg.status;
+        this.ACKsent = msg.ACKsent;
         this.type = msg.type;
         this.firstMsg = msg.firstMsg;
     }
@@ -107,14 +107,6 @@ public class Message implements Comparable<Message>, Sendable,Serializable{
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     /***
@@ -131,5 +123,13 @@ public class Message implements Comparable<Message>, Sendable,Serializable{
      */
     public void setFirstMsg(Message firstMsg) {
         this.firstMsg = firstMsg;
+    }
+    
+    public boolean isACKsent() {
+        return ACKsent;
+    }
+
+    public void setACKsent(boolean ACKsent) {
+        this.ACKsent = ACKsent;
     }
 }

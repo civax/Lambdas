@@ -220,7 +220,7 @@ public class Process {
             String ip="";
             int port=-1;
             //Mensaje respondido.
-            receivedRequest.status="ACK";
+            receivedRequest.ACKsent=true;
             //Buscar ip y puerto del proceso que envio el mensaje
             for (Process p : listProcess) {
                 if(p.Id.equals(receivedRequest.process)){
@@ -349,7 +349,7 @@ public class Process {
      */
     private void sendPendingACK() {
         for (Message message : list) {
-            if(message.status.equals("R"))
+            if(!message.ACKsent)
                 sendResponse(message);
         }
     }
