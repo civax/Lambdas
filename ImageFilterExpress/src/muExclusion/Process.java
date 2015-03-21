@@ -215,7 +215,7 @@ public class Process {
         //Si no esta en la CS enviar mensaje ACK
         if(!this.inCS){
             Message req = new Message(this.Id, "ACK");
-            req.firstMsg = new Message(receivedRequest);
+//            req.firstMsg = new Message(receivedRequest);
             
             String ip="";
             int port=-1;
@@ -257,11 +257,11 @@ public class Process {
         for ( int i=0; i< listACK.size();i++) {
             Message msg =  listACK.get(i);
             
-            if(!listProcessTemp.containsKey(msg.process) && topRequest.date.equals(msg.firstMsg.date))
+            if(!listProcessTemp.containsKey(msg.process)) //&& topRequest.date.equals(msg.firstMsg.date))
                 listProcessTemp.put(msg.process, i);
             
-            if(listProcessTemp.size()==listProcess.size())
-                break;
+            //if(listProcessTemp.size()==listProcess.size())
+              //  break;
         }
         
         //Todos los ACK han sido recibidos, el top en el query es el mismo 
@@ -269,15 +269,16 @@ public class Process {
         if(listProcessTemp.size()==listProcess.size())
         {
             //quitar los ACK en el lista de ACK
-            for (int i = listProcessTemp.size()-1; i > -1; i--) 
-                listACK.remove(i);
+            listACK.clear();
+            //for (int i = listProcessTemp.size()-1; i > -1; i--) 
+            //    listACK.remove(i);
      
             try {
                 this.inCS=true;
                 goToCS();
                 //quita su propia solicitud de su cola
                 list.remove(0);
-                sendRelease(topRequest);
+                sendRelease();
                 this.inCS=false;
                 sendPendingACK();
             } catch (InterruptedException ex) {
@@ -312,17 +313,15 @@ public class Process {
      * Enviar mensaje de release a todos los procesos.
      * @param topRequest 
      */
-    private void sendRelease(Message topRequest) {
+    private void sendRelease() {
         String ip;
         int port;
         for (Process p : listProcess) {
-            //if(!p.Id.equals(this.Id)){
-                ip = p.IP;
-                port = p.PORT;
-                Message rel = new Message(this.Id, "Release");
-                rel.setFirstMsg(topRequest);
-                this.sendRequest(rel, port, ip);
-            //}
+            ip = p.IP;
+            port = p.PORT;
+            Message rel = new Message(this.Id, "Release");
+            //rel.setFirstMsg(topRequest);
+            this.sendRequest(rel, port, ip);
         }
     }
 
@@ -336,8 +335,8 @@ public class Process {
         int i;
         for (i = 0; i < list.size(); i++) {
             Message msg =  list.get(i);
-            if(msg.date.equals(receivedRequest.firstMsg.date) &&
-                    msg.process.equals(receivedRequest.firstMsg.process))
+            if(msg.process.equals(receivedRequest.process))
+                //msg.date.equals(receivedRequest.firstMsg.date) &&;
             break;
         }
         

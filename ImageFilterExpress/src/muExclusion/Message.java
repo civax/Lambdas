@@ -44,7 +44,7 @@ public class Message implements Comparable<Message>, Sendable,Serializable{
     /***
      * Mensaje original de solicitud de acceso a la CS
      */
-    Message firstMsg;
+    //Message firstMsg;
 
     public Message(String process, String type){
         this.process = process;
@@ -98,7 +98,7 @@ public class Message implements Comparable<Message>, Sendable,Serializable{
         this.process = msg.process;
         this.ACKsent = msg.ACKsent;
         this.type = msg.type;
-        this.firstMsg = msg.firstMsg;
+    //    this.firstMsg = msg.firstMsg;
     }
 
     public String getType() {
@@ -113,7 +113,7 @@ public class Message implements Comparable<Message>, Sendable,Serializable{
      * Obtener el mensaje original con el que se solicito el acceso a la CS
      * @return 
      */
-    public Message getFirstMsg() {
+    /*public Message getFirstMsg() {
         return firstMsg;
     }
 
@@ -121,9 +121,9 @@ public class Message implements Comparable<Message>, Sendable,Serializable{
      * Guardar el mensaje original con el que se solicito el acceso a la CS
      * @param firstMsg 
      */
-    public void setFirstMsg(Message firstMsg) {
+    /*public void setFirstMsg(Message firstMsg) {
         this.firstMsg = firstMsg;
-    }
+    }*/
     
     public boolean isACKsent() {
         return ACKsent;
