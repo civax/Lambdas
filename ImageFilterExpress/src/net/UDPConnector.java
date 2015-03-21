@@ -69,7 +69,10 @@ public class UDPConnector implements Connector<Sendable>{
             socket.send(new DatagramPacket(arr, arr.length,ia,port));
 	} catch (IOException ex) { 
             Logger.getLogger(UDPConnector.class.getName()).log(Level.SEVERE, "error de envio", ex);
-        } 
+        } catch(IllegalArgumentException e){
+            Logger.getLogger(UDPConnector.class.getName()).log(Level.SEVERE, "error de parametros sending to  [ip "+ip+" ] [port "+port+" ]", e);
+            System.out.println(remoteObject);
+        }
     }
 
     @Override
