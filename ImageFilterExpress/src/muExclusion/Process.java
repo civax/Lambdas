@@ -15,7 +15,6 @@ import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
@@ -87,7 +86,7 @@ public class Process {
 
     public Process(String id, String ip, int port, String syncIP, int syncPORT) {
         this.Id = id;
-        this.file = file;
+        this.file = "Processes.txt";
         list = new ArrayList();
         listACK = new ArrayList();
         inCS = false;
@@ -134,13 +133,7 @@ public class Process {
      * almacena en una cola de requests
      */
     public synchronized void receiveRequest(Object remoteObject) {
-//       
        new Thread( () -> {
-//            System.out.println("[ACTION: ] waiting requests...");
-//
-//            Object remoteObject=connector.receive();
-//            if(remoteObject instanceof Message)
-//            {
         Message receivedRequest = (Message) remoteObject;
         System.out.println("[INFO: ] request received in " + this.Id);
         //Acción dependiendo del tipo de mensaje
@@ -153,10 +146,12 @@ public class Process {
                 sendResponse(receivedRequest);
                 break;
             //Mensaje de ACK de parte de los otros procesos
-            case "ACK":
+            case ACK:
+                //new Thread( () -> {
                 System.out.println("ACK from "
                         + receivedRequest.process + " to " + this.Id);
                 saveACK(receivedRequest);
+                //}).start();
                 break;
             //Mensaje de release de la CS
             case "Release":
@@ -164,8 +159,7 @@ public class Process {
                         + receivedRequest.process + " to " + this.Id);
                 getRelease(receivedRequest);
                 break;
-        }
-//            }
+            }
         }).start();
     }
 
@@ -393,7 +387,8 @@ public class Process {
     private void sendResponse(Message receivedRequest) {
 
         //Si no esta en la CS enviar mensaje ACK
-        if (!this.inCS) {
+        if (!this.inCS && notOtherACK()) {
+            
             Message req = new Message(this.Id, "ACK");
             
             String ip="";
@@ -408,6 +403,8 @@ public class Process {
                 }
             }
             //Enviar ACK
+            System.out.println("Send ACK from "
+                        + this.Id + " to " + receivedRequest.process);
             this.sendRequest(req, port, ip);
         }
     }
@@ -430,40 +427,31 @@ public class Process {
         if (topRequest.process != this.Id) {
             return;
         }
-
-        int num = listProcess.size();
-        HashMap<String, Integer> listProcessTemp = new HashMap<>();
-        //Buscar en la lista de ACK recibidas si se tienen todos los ACK
-        //del top request en la lista.
-        for ( int i=0; i< listACK.size();i++) {
-            Message msg =  listACK.get(i);
-            
-            if(!listProcessTemp.containsKey(msg.process)) //&& topRequest.date.equals(msg.firstMsg.date))
-                listProcessTemp.put(msg.process, i);
-            
-            //if(listProcessTemp.size()==listProcess.size())
-              //  break;
-            
-        }
-
+        
+        System.out.println("Este proceso si es el top de la cola. ACK# " +  listACK.size());
         //Todos los ACK han sido recibidos, el top en el query es el mismo 
         //proceso, por lo tanto se puede entrar en la CS
-        if (listProcessTemp.size() == listProcess.size()) {
+        if (listACK.size() == listProcess.size()-1) {
             //quitar los ACK en el lista de ACK
+            System.out.println("Se han recibido todos los ACK");
             listACK.clear();
             try {
                 this.inCS = true;
+                System.out.println("The process " + this.Id + " is in CS ");
                 goToCS();
                 //quita su propia solicitud de su cola
+                System.out.println("The process " + this.Id + " is out of CS ");
                 list.remove(0);
                 sendRelease();
                 this.inCS=false;
+                //new Thread( () -> {
                 sendPendingACK();
+                //}).start();
             } catch (InterruptedException ex) {
                 Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
             }
-
         }
+        System.out.println("----");
     }
 
     /**
@@ -477,12 +465,15 @@ public class Process {
         int num = 1 + (int) (Math.random() * ((3 - 1) + 1));
         switch (num) {
             case 1:
+                System.out.println("read");
                 read();
                 break;
             case 2:
+                System.out.println("write");
                 write();
                 break;
             case 3:
+                System.out.println("update");
                 update();
                 break;
         }
@@ -499,11 +490,14 @@ public class Process {
         String ip;
         int port;
         for (Process p : listProcess) {
-            ip = p.IP;
-            port = p.PORT;
-            Message rel = new Message(this.Id, "Release");
-            //rel.setFirstMsg(topRequest);
-            this.sendRequest(rel, port, ip);
+            if(this.Id!=p.Id){
+                ip = p.IP;
+                port = p.PORT;
+                Message rel = new Message(this.Id, "Release");
+                //rel.setFirstMsg(topRequest);
+                System.out.println("Send Release from " + this.Id + " to " + p.Id);
+                this.sendRequest(rel, port, ip);
+            }
         }
     }
 
@@ -532,6 +526,8 @@ public class Process {
     private void sendPendingACK() {
         for (Message message : list) {
             if(!message.ACKsent){
+                System.out.println("Send pending ACK from "
+                        + this.Id + " to " + message.process);
                 sendResponse(message);
                 message.ACKsent = true;
                 break;
@@ -545,5 +541,12 @@ public class Process {
 
     private RegistryCard processToCard(Process process) {
         return new RegistryCard(process);
+    }
+
+    private boolean notOtherACK() {
+        for (Message message : list) 
+            if(message.ACKsent)
+                return false;
+        return true;
     }
 }
