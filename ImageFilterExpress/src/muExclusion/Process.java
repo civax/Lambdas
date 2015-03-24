@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,8 +39,8 @@ public class Process {
     static List<Process> listProcess;
     boolean inCS;
     private static final String ACK="ACK";
-    private static final String REL="REL";
-    private static final String REQ="REQ";
+    private static final String RELEASE="RELEASE";
+    private static final String REQUEST="REQUEST";
     UDPConnector connector;
     final String IP;
     final int PORT;
@@ -76,6 +77,7 @@ public class Process {
     }
 
     private Process(RegistryCard card) {
+        this.format = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
         this.Id = card.Id;
         this.PORT = card.port;
         this.IP = card.ip;
@@ -85,6 +87,7 @@ public class Process {
     private final boolean isSyncher;
 
     public Process(String id, String ip, int port, String syncIP, int syncPORT) {
+        this.format = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
         this.Id = id;
         this.file = "Processes.txt";
         list = new ArrayList();
@@ -115,34 +118,37 @@ public class Process {
 
     public Message request() {
         //Agregar request a su misma cola
-        Message req = new Message(Id, "R");
+        Message req = new Message(Id, REQUEST);
         list.add(req);
         listProcess.stream().filter(
                 (p) -> (!this.Id.equals(p.Id))
         ).forEach(
                 (p) -> {
                     this.sendRequest(req, p.PORT, p.IP);
+                    randomWait();
                 }
         );
         return req;
     }
-    private SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
+    private final SimpleDateFormat format;
 
     /**
      * Este metodo recibe requests mientras la bandera este activada y las
      * almacena en una cola de requests
+     * @param remoteObject
      */
     public synchronized void receiveRequest(Object remoteObject) {
        new Thread( () -> {
         Message receivedRequest = (Message) remoteObject;
-        System.out.println("[INFO: ] request received in " + this.Id);
+        System.out.println("[INFO: ] request received : "+receivedRequest+" in " + this.Id);
         //Acción dependiendo del tipo de mensaje
         switch (receivedRequest.type) {
             //Solicitud de acceso a la CS
-            case "R":
-                System.out.println("Request from "
-                        + receivedRequest.process + " to " + this.Id);
+            case REQUEST:
+//                System.out.println("Request from "
+//                        + receivedRequest.process + " to " + this.Id);
                 list.add(receivedRequest);
+                System.out.println("request queue: "+list);
                 sendResponse(receivedRequest);
                 break;
             //Mensaje de ACK de parte de los otros procesos
@@ -154,7 +160,7 @@ public class Process {
                 //}).start();
                 break;
             //Mensaje de release de la CS
-            case "Release":
+            case RELEASE:
                 System.out.println("Release from "
                         + receivedRequest.process + " to " + this.Id);
                 getRelease(receivedRequest);
@@ -170,6 +176,7 @@ public class Process {
 
     public void sendRequest(Message req, int port, String ip) {
         new Thread(() -> {
+            System.out.println("Sending Request: "+req+" to "+ip+":"+port);
             connector.send(req, port, ip);
         }).start();
     }
@@ -385,11 +392,11 @@ public class Process {
      * @param receivedRequest
      */
     private void sendResponse(Message receivedRequest) {
-
+        System.out.println("critic section: "+this.inCS+"no other ACK: "+notOtherACK());
         //Si no esta en la CS enviar mensaje ACK
         if (!this.inCS && notOtherACK()) {
             
-            Message req = new Message(this.Id, "ACK");
+            Message req = new Message(this.Id, ACK);
             
             String ip="";
             int port=-1;
@@ -419,9 +426,10 @@ public class Process {
      */
     private void saveACK(Message receivedRequest) {
         listACK.add(receivedRequest);
-
+        System.out.println("list of ack: "+listACK);
+        
         Message topRequest = new Message(list.get(0));
-
+        System.out.println("[save ACK]request queue: "+list+" top: "+topRequest);
         //Si el top request no es el mismo proceso entonces no puede entrar
         //en la CS
         if (topRequest.process != this.Id) {
@@ -479,7 +487,16 @@ public class Process {
         }
         Thread.sleep(1000);
     }
-
+    public static void randomWait(){
+        Random random=new Random(800);
+        int wait=random.nextInt(500)+300;
+        System.out.println("waiting: "+wait);
+        try{
+            Thread.sleep(wait);
+        }catch(InterruptedException e){
+            
+        }
+    }
     /**
      * *
      * Enviar mensaje de release a todos los procesos.
@@ -493,7 +510,7 @@ public class Process {
             if(this.Id!=p.Id){
                 ip = p.IP;
                 port = p.PORT;
-                Message rel = new Message(this.Id, "Release");
+                Message rel = new Message(this.Id, RELEASE);
                 //rel.setFirstMsg(topRequest);
                 System.out.println("Send Release from " + this.Id + " to " + p.Id);
                 this.sendRequest(rel, port, ip);
