@@ -7,6 +7,7 @@ package muExclusion;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Objects;
 import net.Sendable;
 import net.util.Clock;
 
@@ -70,14 +71,30 @@ public class Message implements Comparable<Message>, Sendable, Serializable {
     }
 
     @Override
-    public int compareTo(Message req) {
-        //Son iguales
-        if (this.process.equals(req.process)
-                && this.date.compareTo(req.date) == 0) {
-            return 1;
-        }
-        return 0;
+    public int hashCode() {
+        int hash = 3;
+        hash = 23 * hash + Objects.hashCode(this.process);
+        //hash = 23 * hash + Objects.hashCode(this.date);
+        return hash;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Message other = (Message) obj;
+        if (!Objects.equals(this.process, other.process)) {
+            return false;
+        }
+//        if (!Objects.equals(this.date, other.date)) {
+//            return false;
+//        }
+        return true;
+    }  
 
     public int getClock() {
         return clock.getTime();
@@ -89,7 +106,7 @@ public class Message implements Comparable<Message>, Sendable, Serializable {
 
     @Override
     public String toString() {
-        return "Message{" + "process=" + process + ", type=" + type + ", status=" + ACKsent ;//+ ", firstMsg=" + firstMsg + '}';
+        return  "(process=" + process + ", type=" + type + ", ACK status=" + ACKsent+")";// +" date: "+date;//+ ", firstMsg=" + firstMsg + '}';
     }
 
     /**
@@ -123,4 +140,11 @@ public class Message implements Comparable<Message>, Sendable, Serializable {
     public void setACKsent(boolean ACKsent) {
         this.ACKsent = ACKsent;
     }
+
+    @Override
+    public int compareTo(Message t) {
+        return this.date.compareTo(t.date);
+    }
+
+    
 }

@@ -77,7 +77,7 @@ public class Process {
     }
 
     private Process(RegistryCard card) {
-        this.format = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
+        this.dateFormater = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
         this.Id = card.Id;
         this.PORT = card.port;
         this.IP = card.ip;
@@ -87,9 +87,10 @@ public class Process {
     private final boolean isSyncher;
 
     public Process(String id, String ip, int port, String syncIP, int syncPORT) {
-        this.format = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
+        this.dateFormater = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
         this.Id = id;
         this.file = "Processes.txt";
+        createFile();
         list = new ArrayList();
         listACK = new ArrayList();
         inCS = false;
@@ -97,22 +98,20 @@ public class Process {
         this.PORT = port;
         listProcess = new ArrayList<>();
         connector = new UDPConnector(port);
+        
         System.out.println("Process " + this.Id + " running at: " + this.IP + ":" + this.PORT);
         addTarget(this);
         startListening(3);
-        try {
+        
             //sync with already started processes
-            Thread.sleep(500);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        randomWait();
         if (syncIP != null && syncPORT != 0) {
             isSyncher = false;
             syncProcess(this, syncIP, syncPORT);
         } else {
             isSyncher = true;
         }
-
+        write();
         //this.receiveRequest();
     }
 
@@ -130,7 +129,7 @@ public class Process {
         );
         return req;
     }
-    private final SimpleDateFormat format;
+    private final SimpleDateFormat dateFormater;
 
     /**
      * Este metodo recibe requests mientras la bandera este activada y las
@@ -145,24 +144,20 @@ public class Process {
         switch (receivedRequest.type) {
             //Solicitud de acceso a la CS
             case REQUEST:
-//                System.out.println("Request from "
-//                        + receivedRequest.process + " to " + this.Id);
                 list.add(receivedRequest);
-                System.out.println("request queue: "+list);
+                System.out.println("["+this.Id+" ACTION] REQUEST received from "
+                        + receivedRequest.process );
                 sendResponse(receivedRequest);
                 break;
-            //Mensaje de ACK de parte de los otros procesos
             case ACK:
-                //new Thread( () -> {
-                System.out.println("ACK from "
-                        + receivedRequest.process + " to " + this.Id);
+                System.out.println("["+this.Id+" ACTION] ACK received from "
+                        + receivedRequest.process );
                 saveACK(receivedRequest);
-                //}).start();
                 break;
             //Mensaje de release de la CS
             case RELEASE:
-                System.out.println("Release from "
-                        + receivedRequest.process + " to " + this.Id);
+                System.out.println("["+this.Id+" ACTION] RELEASE received from "
+                        + receivedRequest.process );
                 getRelease(receivedRequest);
                 break;
             }
@@ -174,13 +169,21 @@ public class Process {
         return "Process{" + "Id=" + Id + ", IP=" + IP + ", PORT=" + PORT + '}';
     }
 
-    public void sendRequest(Message req, int port, String ip) {
+    public synchronized void sendRequest(Message req, int port, String ip) {
         new Thread(() -> {
             System.out.println("Sending Request: "+req+" to "+ip+":"+port);
             connector.send(req, port, ip);
         }).start();
     }
-
+    private void createFile(){
+        Path f = Paths.get(file);
+        if(!Files.exists(f))
+            try {
+                Files.createFile(f);
+        } catch (IOException ex) {
+            Logger.getLogger(Process.class.getName()).log(Level.SEVERE, "File creation failed", ex);
+        }
+    }
     /**
      * *
      * Actualizar un determinado archivo
@@ -198,15 +201,12 @@ public class Process {
      */
     public void read() {
         Path f = Paths.get(file);
-
-        try (
-                Scanner reader = new Scanner(file); //PrintWriter writter = new PrintWriter(f.toFile())
-                ) {
-            String line = reader.nextLine();
-            while (line != null) {
-                line = reader.nextLine();
+        try  {
+            for (String line:Files.readAllLines(f)) {
                 System.out.println(line + "\n");
             }
+        }catch(IOException e){
+            
         }
 
     }
@@ -220,7 +220,7 @@ public class Process {
         Path f = Paths.get(file);
         try (
                 BufferedWriter writter = Files.newBufferedWriter(f, StandardOpenOption.APPEND);) {
-            String text = "[" + Id + "]" + "[" + format.format(new Date()) + "]";
+            String text = "[" + Id + "]" + "[" + dateFormater.format(new Date()) + "]\n";
             writter.append(text);
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
@@ -235,7 +235,7 @@ public class Process {
                 Process receivedProcess = cardToProcess(card);
                 if (!listProcess.contains(receivedProcess) && (listProcess.size() <= waitfor)) {
                     addTarget(receivedProcess);
-                    System.out.println("[ " + Id + " ][" + format.format(new Date()) + "] Process " + receivedProcess.Id + " added to work group");
+                    System.out.println("[ " + Id + " ][" + dateFormater.format(new Date()) + "] Process " + receivedProcess.Id + " added to work group");
                     System.out.println("# of processes in the group: " + listProcess.size() + " waiting for: " + waitfor);
                     if (isSyncher) {
                         syncGroup(cloneList(listProcess), receivedProcess.IP, receivedProcess.PORT);
@@ -244,34 +244,52 @@ public class Process {
                 if (!(listProcess.size() < waitfor)) {
                     System.out.println("# of processes quota reached: " + listProcess.size() + " stop waiting for processes");
                     stopListening();
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    try (
-                            Scanner scanner = new Scanner(System.in);) {
+                    randomWait();
+                    
                         System.out.print("Ready to start: ");
-                        while (!(scanner.nextLine().toUpperCase()).equals("START")) {
-                        }
-
-                    }
-                    System.out.println("[ " + Id + " ][" + format.format(new Date()) + "] Sending request...");
-                    Message req1 = request();
-                    listProcess.stream().filter(
-                            (p) -> (!this.equals(p))
-                    ).forEach(
-                            (p) -> {
-                                sendRequest(req1, p.PORT, p.IP);
-                            }
-                    );
+//                        
+                        randomWait();
+                        randomWait();
+                        randomWait();
+                        requestAccessToCS();
+                    
+                    
                 }
+            }).start();
+            new Thread(() -> {
+                try (
+                            Scanner scanner = new Scanner(System.in);) {
+            
+                while (true) {
+                    String output=scanner.nextLine().toUpperCase();
+                    switch (output) {
+                        case "STATUS":
+                            System.out.println("ACK list: "+listACK);
+                            System.out.println("Queue: "+list);
+                            System.out.println("in CS: "+inCS);
+                            break;
+                        case "RESUME":
+                            sendPendingACK();
+                            break;
+                    }
+                       }
+            }
             }).start();
         } else {
             System.out.println("# of processes quota reached: " + listProcess.size() + " no more processes required");
         }
     }
-
+    private void requestAccessToCS(){
+        System.out.println("[ " + Id + " ][ACTION] Need access to Critic Section, sending request...");
+        Message req1 = request();
+        listProcess.stream().filter(
+            (p) -> (!this.equals(p))
+        ).forEach(
+            (p) -> {
+                sendRequest(req1, p.PORT, p.IP);
+            }
+        );
+    }
     public void addTarget(Process p) {
         listProcess.add(p);
     }
@@ -318,15 +336,15 @@ public class Process {
         }).start();
     }
 
-    private List<Process> cloneList(List<Process> list) {
-        List<Process> cloneList = new ArrayList<>();
+    private <T> List<T> cloneList(List<T> list) {
+        List<T> cloneList = new ArrayList<>();
         list.forEach(p -> {
             cloneList.add(p);
         });
         return cloneList;
     }
 
-    private void sendCard(Process process, String ip, int port) {
+    private synchronized void sendCard(Process process, String ip, int port) {
         RegistryCard card = processToCard(process);
         connector.send(card, port, ip);
     }
@@ -341,11 +359,7 @@ public class Process {
         list.forEach(
                 p -> {
                     listProcess.forEach(p2 -> {
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException ex) {
-                            Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
-                        }
+                        randomWait();
                         if (!this.equals(p2)) {
                             sendCard(p, p2.IP, p2.PORT);
                         }
@@ -391,8 +405,7 @@ public class Process {
      *
      * @param receivedRequest
      */
-    private void sendResponse(Message receivedRequest) {
-        System.out.println("critic section: "+this.inCS+"no other ACK: "+notOtherACK());
+    private synchronized void sendResponse(Message receivedRequest) {
         //Si no esta en la CS enviar mensaje ACK
         if (!this.inCS && notOtherACK()) {
             
@@ -426,40 +439,46 @@ public class Process {
      */
     private void saveACK(Message receivedRequest) {
         listACK.add(receivedRequest);
-        System.out.println("list of ack: "+listACK);
-        
-        Message topRequest = new Message(list.get(0));
-        System.out.println("[save ACK]request queue: "+list+" top: "+topRequest);
+        //System.out.println("list of ack: "+listACK);
+        if(!list.isEmpty()){
+        Message topRequest =list.get(0);
+       // System.out.println("[save ACK]request queue: "+list+" top: "+topRequest);
         //Si el top request no es el mismo proceso entonces no puede entrar
         //en la CS
         if (topRequest.process != this.Id) {
             return;
         }
-        
-        System.out.println("Este proceso si es el top de la cola. ACK# " +  listACK.size());
+        }
+       // System.out.println("Este proceso si es el top de la cola. ACK# " +  listACK.size());
         //Todos los ACK han sido recibidos, el top en el query es el mismo 
         //proceso, por lo tanto se puede entrar en la CS
-        if (listACK.size() == listProcess.size()-1) {
+        if (listACK.size() >= listProcess.size()-1) {
             //quitar los ACK en el lista de ACK
-            System.out.println("Se han recibido todos los ACK");
+            System.out.println("[INFO] all ACK received");
             listACK.clear();
             try {
                 this.inCS = true;
-                System.out.println("The process " + this.Id + " is in CS ");
+                System.out.println("-----------------------------------------");
+                System.out.println("-----------------------------------------");
+                System.out.println("[INFO ]" + this.Id + " is entering Critic Section @ "+dateFormater.format(new Date()));
                 goToCS();
                 //quita su propia solicitud de su cola
-                System.out.println("The process " + this.Id + " is out of CS ");
-                list.remove(0);
+                System.out.println("[INFO ]" + this.Id + " is leaving Critic Section @ "+dateFormater.format(new Date()));
+                if(!list.isEmpty())
+                    list.remove(0);
                 sendRelease();
                 this.inCS=false;
-                //new Thread( () -> {
                 sendPendingACK();
-                //}).start();
+                System.out.println("-----------------------------------------");
+                System.out.println("-----------------------------------------");
+                randomWait();
+                randomWait();
+                requestAccessToCS();
+                
             } catch (InterruptedException ex) {
                 Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        System.out.println("----");
     }
 
     /**
@@ -470,27 +489,29 @@ public class Process {
      */
     private void goToCS() throws InterruptedException {
         //write,update,read
-        int num = 1 + (int) (Math.random() * ((3 - 1) + 1));
+//        int num = 1 + (int) (Math.random() * ((3 - 1) + 1));
+        Random r=new Random();
+        int num=r.nextInt(3)+1;
         switch (num) {
             case 1:
-                System.out.println("read");
+                System.out.println("[INFO] "+this.Id+" is reading the shared file");
                 read();
                 break;
             case 2:
-                System.out.println("write");
+                System.out.println("[INFO] "+this.Id+" is writing into the shared file");
                 write();
                 break;
             case 3:
-                System.out.println("update");
+                System.out.println("[INFO] "+this.Id+" is updating the shared file");
                 update();
                 break;
         }
-        Thread.sleep(1000);
+        randomWait();
     }
+    private static final Random random;
+    static{random=new Random(800);}
     public static void randomWait(){
-        Random random=new Random(800);
         int wait=random.nextInt(500)+300;
-        System.out.println("waiting: "+wait);
         try{
             Thread.sleep(wait);
         }catch(InterruptedException e){
@@ -525,15 +546,12 @@ public class Process {
      * @param receivedRequest
      */
     private void getRelease(Message receivedRequest) {
-        int i;
-        for (i = 0; i < list.size(); i++) {
-            Message msg =  list.get(i);
-            if(msg.process.equals(receivedRequest.process))
-                //msg.date.equals(receivedRequest.firstMsg.date) &&;
-            break;
+        System.out.println("[ INFO ] Releasing: "+receivedRequest.process);
+        if((!Objects.isNull(list))&& !list.isEmpty()){
+           list.removeIf(
+                   e->e.equals(receivedRequest)
+                   );
         }
-
-        list.remove(i);
     }
 
     /**
@@ -543,8 +561,7 @@ public class Process {
     private void sendPendingACK() {
         for (Message message : list) {
             if(!message.ACKsent){
-                System.out.println("Send pending ACK from "
-                        + this.Id + " to " + message.process);
+                System.out.println("[ INFO ] Sending pending ACK to "+ message.process);
                 sendResponse(message);
                 message.ACKsent = true;
                 break;
