@@ -14,9 +14,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -34,7 +36,7 @@ public class Process {
     /**
      * Cola de solicitudes
      */
-    List<Message> list;
+    PriorityQueue <Message> list;
     List<String> listACK;
     static List<Process> listProcess;
     boolean inCS;
@@ -91,7 +93,7 @@ public class Process {
         this.Id = id;
         this.file = "Processes.txt";
         createFile();
-        list = new ArrayList();
+        list = new PriorityQueue<Message>();
         listACK = new ArrayList();
         inCS = false;
         this.IP = ip;
@@ -118,7 +120,8 @@ public class Process {
     public Message request() {
         //Agregar request a su misma cola
         Message req = new Message(Id, REQUEST);
-        list.add(req);
+        list.offer(req);
+        
         listProcess.stream().filter(
                 (p) -> (!this.Id.equals(p.Id))
         ).forEach(
@@ -144,7 +147,7 @@ public class Process {
         switch (receivedRequest.type) {
             //Solicitud de acceso a la CS
             case REQUEST:
-                list.add(receivedRequest);
+                list.offer(receivedRequest);
                 System.out.println("["+this.Id+" ACTION] REQUEST received from "
                         + receivedRequest.process );
                 sendResponse(receivedRequest);
@@ -442,7 +445,7 @@ public class Process {
         listACK.add(receivedRequest.process);
         //System.out.println("list of ack: "+listACK);
         if(!list.isEmpty()){
-        Message topRequest =list.get(0);
+        Message topRequest =list.peek();
        // System.out.println("[save ACK]request queue: "+list+" top: "+topRequest);
         //Si el top request no es el mismo proceso entonces no puede entrar
         //en la CS
@@ -459,9 +462,9 @@ public class Process {
         //Todos los ACK han sido recibidos, el top en el query es el mismo 
         //proceso, por lo tanto se puede entrar en la CS
         
-        System.out.println("ACK list: "+listACK);
+        /*System.out.println("ACK list: "+listACK);
                             System.out.println("Queue: "+list);
-                            System.out.println("in CS: "+inCS);
+                            System.out.println("in CS: "+inCS);*/
         if (allACKreceived()) {
             //quitar los ACK en el lista de ACK
             System.out.println("[INFO] all ACK received");
@@ -476,15 +479,15 @@ public class Process {
                 System.out.println("[INFO ]" + this.Id + " is leaving Critic Section @ "+dateFormater.format(new Date()));
                 
                 if(!list.isEmpty())
-                    list.remove(0);
+                    list.poll();
                 
                 sendRelease();
                 this.inCS=false;
                 sendPendingACK();
                 System.out.println("-----------------------------------------");
-                System.out.println("ACK list: "+listACK);
+                /*System.out.println("ACK list: "+listACK);
                             System.out.println("Queue: "+list);
-                            System.out.println("in CS: "+inCS);
+                            System.out.println("in CS: "+inCS);*/
                 System.out.println("-----------------------------------------");
                 randomWait();
                 randomWait();
@@ -543,16 +546,14 @@ public class Process {
     private void sendRelease() {
         String ip;
         int port;
-        for (Process p : listProcess) {
-            if(this.Id.equals(p.Id)){
-                ip = p.IP;
-                port = p.PORT;
-                Message rel = new Message(this.Id, RELEASE);
-                //rel.setFirstMsg(topRequest);
+        listProcess.stream().filter(
+            p -> !(p.Id.equals(this.Id))
+        ).forEach( 
+            p->{
                 System.out.println("Send Release from " + this.Id + " to " + p.Id);
                 this.sendRequest(new Message(this.Id, RELEASE), p.PORT, p.IP);
             }
-        }
+        );
 //        for (Process p : listProcess) {
 //            if(!this.Id.equals(p.Id)){
 //                ip = p.IP;
@@ -584,8 +585,9 @@ public class Process {
                     break;
             }
             list.remove(i);*/
-            int i = list.indexOf(receivedRequest);
-            list.remove(i);
+            //int i = list.indexOf(receivedRequest);
+            //list.remove(i);
+            list.remove(receivedRequest);
         }
     }
 
@@ -634,10 +636,10 @@ public class Process {
         }
         
         if(index.size()== listProcess.size()-1){
-            System.out.println("#ACK" +listACK.size());
+            //System.out.println("#ACK" +listACK.size());
             for (int i = index.size()-1; i >= 0; i--) 
                 listACK.remove((int)index.get(i));
-            System.out.println("#ACK" +listACK.size());
+            //System.out.println("#ACK" +listACK.size());
             return true;
         }
 

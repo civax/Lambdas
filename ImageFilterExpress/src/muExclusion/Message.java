@@ -106,7 +106,8 @@ public class Message implements Comparable<Message>, Sendable {
 
     @Override
     public String toString() {
-        return  "(process=" + process + ", type=" + type + ", ACK status=" + ACKsent+")";// +" date: "+date;//+ ", firstMsg=" + firstMsg + '}';
+        return  "(process=" + process + ", type=" + type + ", ACK status=" + 
+                ACKsent+" date: "+date +")";//+ ", firstMsg=" + firstMsg + '}';
     }
 
     /**
