@@ -243,20 +243,17 @@ public class Process {
                 }
                 if (!(listProcess.size() < waitfor)) {
                     System.out.println("# of processes quota reached: " + listProcess.size() + " stop waiting for processes");
-                    stopListening();
-                    randomWait();
-                    
+                    stopListening();                    
                         System.out.print("Ready to start: ");
 //                        
-                        randomWait();
-                        randomWait();
-                        randomWait();
+                        randomWait(4);
                         requestAccessToCS();
+                        startMonitorDaemon();
                     
                     
                 }
             }).start();
-            new Thread(() -> {
+            Thread status=new Thread(() -> {
                 try (
                             Scanner scanner = new Scanner(System.in);) {
             
@@ -270,12 +267,14 @@ public class Process {
                             System.out.println("processes: "+listProcess);
                             break;
                         case "RESUME":
-                            sendPendingACK();
+                            resume();
                             break;
                     }
                        }
             }
-            }).start();
+            });
+             status.setPriority(Thread.MAX_PRIORITY);
+            status.start();
         } else {
             System.out.println("# of processes quota reached: " + listProcess.size() + " no more processes required");
         }
@@ -577,7 +576,35 @@ public class Process {
             }
         }
     }
+    private void resume() {
+        for (Message message : list) {
+            if(!message.ACKsent){
+                System.out.println("[ INFO ] Sending pending ACK to "+ message.process);
+                if (!this.inCS ) {
+            
+                    Message req = new Message(this.Id, ACK);
 
+                    String ip="";
+                    int port=-1;
+                    message.ACKsent=true;
+                    //Buscar ip y puerto del proceso que envio el mensaje
+                    for (Process p : listProcess) {
+                        if (p.Id.equals(message.process)) {
+                            ip = p.IP;
+                            port = p.PORT;
+                            break;
+                        }
+                    }
+            //Enviar ACK
+            System.out.println("Send ACK from "
+                        + this.Id + " to " + message.process);
+            this.sendRequest(req, port, ip);
+        }
+                message.ACKsent = true;
+                break;
+            }
+        }
+    }
     private Process cardToProcess(RegistryCard card) {
         return new Process(card);
     }
@@ -591,5 +618,25 @@ public class Process {
             if(message.ACKsent)
                 return false;
         return true;
+    }
+
+    private void startMonitorDaemon() {
+        new Thread(
+            ()->{
+                while(true){
+                    randomWait(6);
+                    if(!(list.get(0).ACKsent)){
+                        resume();
+                    }
+                }
+            }
+        ).start();
+    }
+
+    private void randomWait(int i) {
+        for(;i>0;i--){
+            randomWait();
+        }
+        
     }
 }
