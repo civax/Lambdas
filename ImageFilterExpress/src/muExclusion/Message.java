@@ -30,7 +30,7 @@ public class Message implements Comparable<Message>, Sendable {
      * *
      * Clock del objeto message
      */
-    Clock clock;
+    private Clock clock;
     /**
      * *
      * Tipo de mensaje que se esta transmitiendo, puede ser de 3 tipos
@@ -46,12 +46,12 @@ public class Message implements Comparable<Message>, Sendable {
      */
     boolean ACKsent;
 
-    public Message(String process, String type) {
+    public Message(String process, String type,Clock clock) {
         this.process = process;
-        this.date = new Date();
+//        this.date = new Date();
         this.type = type;
         this.ACKsent = false;
-        this.clock = new Clock(1);
+        this.clock = new Clock(clock.getTime());
     }
 
     public String getProcess() {
@@ -107,7 +107,7 @@ public class Message implements Comparable<Message>, Sendable {
     @Override
     public String toString() {
         return  "(process=" + process + ", type=" + type + ", ACK status=" + 
-                ACKsent+" date: "+date +")";//+ ", firstMsg=" + firstMsg + '}';
+                ACKsent+" date: "+clock.getTime() +")";//+ ", firstMsg=" + firstMsg + '}';
     }
 
     /**
@@ -144,7 +144,8 @@ public class Message implements Comparable<Message>, Sendable {
 
     @Override
     public int compareTo(Message t) {
-        return this.date.compareTo(t.date);
+        return this.clock.compareTo(t.clock);
+//        return this.date.compareTo(t.date);
     }
 
     

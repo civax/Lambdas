@@ -22,7 +22,7 @@ package net.util;
 
 import java.io.Serializable;
 
-public class Clock implements Serializable{
+public class Clock implements Serializable,Comparable<Clock>{
 
     @Override
     public String toString() {
@@ -72,4 +72,9 @@ public class Clock implements Serializable{
 	private int max(int a, int b){
 		return Math.max(a, b);
 	}   
+
+    @Override
+    public int compareTo(Clock o) {
+        return this.getTime()-o.getTime();
+    }
 }
