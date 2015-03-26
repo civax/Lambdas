@@ -267,6 +267,7 @@ public class Process {
                             System.out.println("ACK list: "+listACK);
                             System.out.println("Queue: "+list);
                             System.out.println("in CS: "+inCS);
+                            System.out.println("processes: "+listProcess);
                             break;
                         case "RESUME":
                             sendPendingACK();
@@ -354,7 +355,7 @@ public class Process {
         sendCard(process, syncIP, syncPort);
     }
 
-    private void syncGroup(List<Process> list, String syncIP, int syncPort) {
+    private synchronized void syncGroup(List<Process> list, String syncIP, int syncPort) {
         System.out.println("Synching with: " + syncIP + ":" + syncPort);
         list.forEach(
                 p -> {
@@ -382,7 +383,7 @@ public class Process {
                 syncIP = null;
                 syncPORT = 0;
                 Process process = new Process(processId, IP.getHostAddress(), port, syncIP, syncPORT);
-            } catch (Exception e) {
+            } catch (NumberFormatException e) {
                 System.err.println("Indicar el identificador del proceso [P1,P2,P3]  el puerto [10000-10003] y el host de sincronizacion");
             }
             //Process p = registerProcess();
@@ -527,16 +528,24 @@ public class Process {
     private void sendRelease() {
         String ip;
         int port;
-        for (Process p : listProcess) {
-            if(this.Id!=p.Id){
-                ip = p.IP;
-                port = p.PORT;
-                Message rel = new Message(this.Id, RELEASE);
-                //rel.setFirstMsg(topRequest);
+        listProcess.stream().filter(
+            p -> !(p.Id.equals(this.Id))
+        ).forEach( 
+            p->{
                 System.out.println("Send Release from " + this.Id + " to " + p.Id);
-                this.sendRequest(rel, port, ip);
+                this.sendRequest(new Message(this.Id, RELEASE), p.PORT, p.IP);
             }
-        }
+        );
+//        for (Process p : listProcess) {
+//            if(!this.Id.equals(p.Id)){
+//                ip = p.IP;
+//                port = p.PORT;
+//                Message rel = new Message(this.Id, RELEASE);
+//                //rel.setFirstMsg(topRequest);
+//                System.out.println("Send Release from " + this.Id + " to " + p.Id);
+//                this.sendRequest(rel, port, ip);
+//            }
+//        }
     }
 
     /**
