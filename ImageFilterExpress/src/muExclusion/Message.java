@@ -15,7 +15,7 @@ import net.util.Clock;
  *
  * @author mary
  */
-public class Message implements Comparable<Message>, Sendable, Serializable {
+public class Message implements Comparable<Message>, Sendable {
 
     /**
      * Id del proceso

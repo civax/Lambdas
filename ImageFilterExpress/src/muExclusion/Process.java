@@ -35,7 +35,7 @@ public class Process {
      * Cola de solicitudes
      */
     List<Message> list;
-    List<Message> listACK;
+    List<String> listACK;
     static List<Process> listProcess;
     boolean inCS;
     private static final String ACK="ACK";
@@ -407,7 +407,7 @@ public class Process {
      */
     private synchronized void sendResponse(Message receivedRequest) {
         //Si no esta en la CS enviar mensaje ACK
-        if (!this.inCS && notOtherACK()) {
+        if (!this.inCS){// && notOtherACK()) {
             
             Message req = new Message(this.Id, ACK);
             
@@ -438,7 +438,7 @@ public class Process {
      * @param receivedRequest
      */
     private void saveACK(Message receivedRequest) {
-        listACK.add(receivedRequest);
+        listACK.add(receivedRequest.process);
         //System.out.println("list of ack: "+listACK);
         if(!list.isEmpty()){
         Message topRequest =list.get(0);
@@ -449,13 +449,22 @@ public class Process {
             return;
         }
         }
+        else
+        {
+            System.out.println("ERROR lista vacia de requests");
+            return;
+        }
        // System.out.println("Este proceso si es el top de la cola. ACK# " +  listACK.size());
         //Todos los ACK han sido recibidos, el top en el query es el mismo 
         //proceso, por lo tanto se puede entrar en la CS
-        if (listACK.size() >= listProcess.size()-1) {
+        
+        System.out.println("ACK list: "+listACK);
+                            System.out.println("Queue: "+list);
+                            System.out.println("in CS: "+inCS);
+        if (allACKreceived()) {
             //quitar los ACK en el lista de ACK
             System.out.println("[INFO] all ACK received");
-            listACK.clear();
+            
             try {
                 this.inCS = true;
                 System.out.println("-----------------------------------------");
@@ -464,19 +473,25 @@ public class Process {
                 goToCS();
                 //quita su propia solicitud de su cola
                 System.out.println("[INFO ]" + this.Id + " is leaving Critic Section @ "+dateFormater.format(new Date()));
+                
                 if(!list.isEmpty())
                     list.remove(0);
+                
                 sendRelease();
                 this.inCS=false;
                 sendPendingACK();
                 System.out.println("-----------------------------------------");
+                System.out.println("ACK list: "+listACK);
+                            System.out.println("Queue: "+list);
+                            System.out.println("in CS: "+inCS);
                 System.out.println("-----------------------------------------");
                 randomWait();
                 randomWait();
                 requestAccessToCS();
                 
             } catch (InterruptedException ex) {
-                Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
+                System.out.println("ERROR: " + ex.getMessage());
+                //Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
@@ -515,7 +530,7 @@ public class Process {
         try{
             Thread.sleep(wait);
         }catch(InterruptedException e){
-            
+            System.out.println("ERROR:" + e.getMessage());
         }
     }
     /**
@@ -528,7 +543,7 @@ public class Process {
         String ip;
         int port;
         for (Process p : listProcess) {
-            if(this.Id!=p.Id){
+            if(this.Id.equals(p.Id)){
                 ip = p.IP;
                 port = p.PORT;
                 Message rel = new Message(this.Id, RELEASE);
@@ -548,9 +563,18 @@ public class Process {
     private void getRelease(Message receivedRequest) {
         System.out.println("[ INFO ] Releasing: "+receivedRequest.process);
         if((!Objects.isNull(list))&& !list.isEmpty()){
-           list.removeIf(
+           /*list.removeIf(
                    e->e.equals(receivedRequest)
-                   );
+                   );*/
+            /*int i=0;
+            for (i=0;i<list.size();i++) {
+                Message msg = list.get(i);
+                if(msg.process.equals(receivedRequest.process) && msg.ACKsent)
+                    break;
+            }
+            list.remove(i);*/
+            int i = list.indexOf(receivedRequest);
+            list.remove(i);
         }
     }
 
@@ -564,7 +588,7 @@ public class Process {
                 System.out.println("[ INFO ] Sending pending ACK to "+ message.process);
                 sendResponse(message);
                 message.ACKsent = true;
-                break;
+                //break;
             }
         }
     }
@@ -577,10 +601,35 @@ public class Process {
         return new RegistryCard(process);
     }
 
+    /**
+     * Checar si ya se envio un ACK en el queue de mensajes, ya que no se puede
+     * enviar otro ACK hasta no recibir el release del proceso al que se le 
+     * envio el ACK
+     * @return false - Si se envio un ACK. true - No hay mensajes con ACK
+     */
     private boolean notOtherACK() {
         for (Message message : list) 
             if(message.ACKsent)
                 return false;
         return true;
+    }
+
+    private boolean allACKreceived() {
+        List<Integer> index = new ArrayList<>();
+        for (Process p : listProcess) {
+            int i = listACK.indexOf(p.Id);
+                if(i!=-1)
+                index.add(i);
+        }
+        
+        if(index.size()== listProcess.size()-1){
+            System.out.println("#ACK" +listACK.size());
+            for (int i = index.size()-1; i >= 0; i--) 
+                listACK.remove((int)index.get(i));
+            System.out.println("#ACK" +listACK.size());
+            return true;
+        }
+
+        return false;
     }
 }
