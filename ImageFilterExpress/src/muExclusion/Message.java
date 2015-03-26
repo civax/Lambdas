@@ -15,7 +15,7 @@ import net.util.Clock;
  *
  * @author mary
  */
-public class Message implements Comparable<Message>, Sendable, Serializable {
+public class Message implements Comparable<Message>, Sendable {
 
     /**
      * Id del proceso
@@ -106,7 +106,8 @@ public class Message implements Comparable<Message>, Sendable, Serializable {
 
     @Override
     public String toString() {
-        return  "(process=" + process + ", type=" + type + ", ACK status=" + ACKsent+")";// +" date: "+date;//+ ", firstMsg=" + firstMsg + '}';
+        return  "(process=" + process + ", type=" + type + ", ACK status=" + 
+                ACKsent+" date: "+date +")";//+ ", firstMsg=" + firstMsg + '}';
     }
 
     /**
