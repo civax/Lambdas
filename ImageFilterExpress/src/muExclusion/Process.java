@@ -15,10 +15,12 @@ import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.UDPConnector;
@@ -35,7 +37,7 @@ public class Process {
      * Cola de solicitudes
      */
     List<Message> list;
-    List<Message> listACK;
+    Set<Message> listACK;
     static List<Process> listProcess;
     boolean inCS;
     private static final String ACK="ACK";
@@ -91,8 +93,8 @@ public class Process {
         this.Id = id;
         this.file = "Processes.txt";
         createFile();
-        list = new ArrayList();
-        listACK = new ArrayList();
+        list = new ArrayList<>();
+        listACK = new HashSet<>();
         inCS = false;
         this.IP = ip;
         this.PORT = port;
@@ -118,7 +120,8 @@ public class Process {
     public Message request() {
         //Agregar request a su misma cola
         Message req = new Message(Id, REQUEST);
-        list.add(req);
+        if(!list.contains(req))
+            list.add(req);
         listProcess.stream().filter(
                 (p) -> (!this.Id.equals(p.Id))
         ).forEach(
@@ -144,7 +147,8 @@ public class Process {
         switch (receivedRequest.type) {
             //Solicitud de acceso a la CS
             case REQUEST:
-                list.add(receivedRequest);
+                if(!list.contains(receivedRequest))
+                    list.add(receivedRequest);
                 System.out.println("["+this.Id+" ACTION] REQUEST received from "
                         + receivedRequest.process );
                 sendResponse(receivedRequest);
@@ -577,33 +581,48 @@ public class Process {
         }
     }
     private void resume() {
-        for (Message message : list) {
-            if(!message.ACKsent){
-                System.out.println("[ INFO ] Sending pending ACK to "+ message.process);
-                if (!this.inCS ) {
-            
-                    Message req = new Message(this.Id, ACK);
-
-                    String ip="";
-                    int port=-1;
-                    message.ACKsent=true;
-                    //Buscar ip y puerto del proceso que envio el mensaje
-                    for (Process p : listProcess) {
+        Message message=list.get(0);
+        String ip="";
+        int port=-1;
+        if(!(this.Id.equals(message.process))){
+            Message req = new Message(this.Id, ACK);
+            for (Process p : listProcess) {
                         if (p.Id.equals(message.process)) {
                             ip = p.IP;
                             port = p.PORT;
                             break;
                         }
                     }
-            //Enviar ACK
-            System.out.println("Send ACK from "
-                        + this.Id + " to " + message.process);
+           
             this.sendRequest(req, port, ip);
         }
-                message.ACKsent = true;
-                break;
-            }
-        }
+//        for (Message message : list) {
+//            if(!message.ACKsent){
+//                System.out.println("[ INFO ] Sending pending ACK to "+ message.process);
+//                if (!this.inCS ) {
+//            
+//                    Message req = new Message(this.Id, ACK);
+//
+//                    String ip="";
+//                    int port=-1;
+//                    message.ACKsent=true;
+//                    //Buscar ip y puerto del proceso que envio el mensaje
+//                    for (Process p : listProcess) {
+//                        if (p.Id.equals(message.process)) {
+//                            ip = p.IP;
+//                            port = p.PORT;
+//                            break;
+//                        }
+//                    }
+//            //Enviar ACK
+//            System.out.println("Send ACK from "
+//                        + this.Id + " to " + message.process);
+//            this.sendRequest(req, port, ip);
+//        }
+//                message.ACKsent = true;
+//                break;
+//            }
+//        }
     }
     private Process cardToProcess(RegistryCard card) {
         return new Process(card);
