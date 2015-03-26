@@ -624,10 +624,8 @@ public class Process {
         new Thread(
             ()->{
                 while(true){
-                    randomWait(6);
-                    if(!(list.get(0).ACKsent)){
+                    randomWait(5);
                         resume();
-                    }
                 }
             }
         ).start();
