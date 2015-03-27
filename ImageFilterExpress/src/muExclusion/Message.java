@@ -74,7 +74,7 @@ public class Message implements Comparable<Message>, Sendable {
     public int hashCode() {
         int hash = 3;
         hash = 23 * hash + Objects.hashCode(this.process);
-        //hash = 23 * hash + Objects.hashCode(this.date);
+        hash = 23 * hash + Objects.hashCode(this.clock);
         return hash;
     }
 
@@ -90,14 +90,14 @@ public class Message implements Comparable<Message>, Sendable {
         if (!Objects.equals(this.process, other.process)) {
             return false;
         }
-//        if (!Objects.equals(this.date, other.date)) {
-//            return false;
-//        }
+        if (!Objects.equals(this.clock, other.clock)) {
+            return false;
+        }
         return true;
     }  
 
-    public int getClock() {
-        return clock.getTime();
+    public Clock getClock() {
+        return clock;
     }
 
     public void setClock(int clock) {

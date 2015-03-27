@@ -74,6 +74,28 @@ public class Clock implements Serializable,Comparable<Clock>{
 	}   
 
     @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 89 * hash + this.time;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Clock other = (Clock) obj;
+        if (this.time != other.time) {
+            return false;
+        }
+        return true;
+    }
+        
+    @Override
     public int compareTo(Clock o) {
         return this.getTime()-o.getTime();
     }

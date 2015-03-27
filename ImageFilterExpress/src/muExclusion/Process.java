@@ -124,10 +124,13 @@ public class Process {
         write();
         //this.receiveRequest();
     }
-
+    private final List<Message> sentRequests;
+    {
+        sentRequests=new ArrayList<>();
+    }
     public Message request() {
         //Agregar request a su misma cola
-        list.forEach(e->getClock().receiveAction(e.getClock()));
+        list.forEach(e->getClock().receiveAction(e.getClock().getTime()));
         
         Message req = new Message(Id, REQUEST,getClock() );
         list.offer(req);
@@ -158,21 +161,21 @@ public class Process {
         switch (receivedRequest.type) {
             //Solicitud de acceso a la CS
             case REQUEST:
-                getClock().receiveAction(receivedRequest.getClock());
+                getClock().receiveAction(receivedRequest.getClock().getTime());
                 this.list.offer(receivedRequest);
                 System.out.println("["+this.Id+" ACTION] REQUEST received from "
                         + receivedRequest.process );
                 sendResponse(receivedRequest);
                 break;
             case ACK:
-                getClock().receiveAction(receivedRequest.getClock());
+                getClock().receiveAction(receivedRequest.getClock().getTime());
                 System.out.println("["+this.Id+" ACTION] ACK received from "
                         + receivedRequest.process );
                 saveACK(receivedRequest);
                 break;
             //Mensaje de release de la CS
             case RELEASE:
-                getClock().receiveAction(receivedRequest.getClock());
+                getClock().receiveAction(receivedRequest.getClock().getTime());
                 System.out.println("["+this.Id+" ACTION] RELEASE received from "
                         + receivedRequest.process ); 
                 if(!list.isEmpty())
@@ -190,7 +193,15 @@ public class Process {
     public synchronized void sendRequest(Message req, int port, String ip) {
         new Thread(() -> {
             System.out.println("Sending Request: "+req+" to "+ip+":"+port);
-            connector.send(req, port, ip);
+//            if(req.type.equals(REQUEST))
+//            {
+//                if (!sentRequests.contains(req)) {
+                    connector.send(req, port, ip);
+//                    sentRequests.add(req);
+//                }
+//            }else{
+//                connector.send(req, port, ip);
+//            }
         }).start();
     }
     private void createFile(){
@@ -266,7 +277,7 @@ public class Process {
 //                        
                         randomWait(4);
                         requestAccessToCS();
-//                        startMonitorDaemon();
+                        startMonitorDaemon();
                     
                     
                 }
@@ -432,8 +443,7 @@ public class Process {
         //Si no esta en la CS enviar mensaje ACK
         if (!this.inCS){// && notOtherACK()) {
             
-            Message req = new Message(this.Id, ACK,getClock());
-            
+            Message req = new Message(this.Id, ACK,receivedRequest.getClock());        
             String ip="";
             int port=-1;
             receivedRequest.ACKsent=true;
@@ -504,10 +514,11 @@ public class Process {
                 //quita su propia solicitud de su cola
                 System.out.println("[INFO ]" + this.Id + " is leaving Critic Section @ "+dateFormater.format(new Date()));
                 
-                if(!list.isEmpty())
-                    list.poll();
+                Message releasetmp;
+                //if(!list.isEmpty())
+                  releasetmp=  list.poll();
                 
-                sendRelease();
+                sendRelease(releasetmp.getClock());
                 this.inCS=false;
                 sendPendingACK();
                 System.out.println("-----------------------------------------");
@@ -559,7 +570,7 @@ public class Process {
      *
      * @param topRequest
      */
-    private void sendRelease() {
+    private void sendRelease(Clock clock) {
 
         String ip;
         int port;
@@ -569,7 +580,7 @@ public class Process {
             p->{
                 System.out.println("Send Release from " + this.Id + " to " + p.Id);
                 getClock().sendAction();
-                this.sendRequest(new Message(this.Id, RELEASE,getClock()), p.PORT, p.IP);
+                this.sendRequest(new Message(this.Id, RELEASE,clock), p.PORT, p.IP);
             }
         );
         
@@ -686,7 +697,12 @@ public class Process {
             ()->{
                 while(true){
                     randomWait(10);
-                        resume();
+//                        resume();
+                    Message curMessage= list.peek();
+                    if(!Objects.isNull(curMessage)&&curMessage.process.equals(this.Id)){
+                        sendResponse(curMessage);
+                    }
+                   // sendPendingACK();
                 }
             }
         ).start();
