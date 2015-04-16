@@ -81,7 +81,8 @@ public class Process {
         this.dateFormater = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
         this.Id = id;
         this.file = "Processes.txt";
-        createFile();
+        createFile(this.file);
+        createFile(this.Id+".log");
         inCS = false;
         this.IP = ip;
         this.PORT = port;
@@ -93,7 +94,7 @@ public class Process {
         randomWait();
         if (syncIP != null && syncPORT != 0) {
             isSyncher = false;
-            //syncProcess(this, syncIP, syncPORT);
+            syncProcess(this, syncIP, syncPORT);
         } else {
             isSyncher = true;
         }
@@ -251,6 +252,7 @@ public class Process {
             Message receivedRequest = (Message) remoteObject;
             System.out.println(this.list);
             System.out.println("[INFO: ] request received : " + receivedRequest + " in " + this.Id);
+            write("[INFO: ] request received : " + receivedRequest + " in " + this.Id);
         //Acción dependiendo del tipo de mensaje
             getClock().receiveAction(receivedRequest.getClock().getTime());
             switch (receivedRequest.type) {
@@ -260,17 +262,23 @@ public class Process {
                     this.list.offer(receivedRequest);
                     System.out.println("[" + this.Id + " ACTION] REQUEST received from "
                             + receivedRequest.process);
+                    write("[" + this.Id + " ACTION] REQUEST received from "
+                            + receivedRequest.process);
                     sendResponse(receivedRequest);
                     break;
                 case ACK:
                     System.out.println("[" + this.Id + " ACTION] ACK received from "
                             + receivedRequest.process);
-
+                    write("[" + this.Id + " ACTION] ACK received from "
+                            + receivedRequest.process);
                     saveACK(receivedRequest);
                     break;
             //Mensaje de release de la CS
                 case RELEASE:
                     System.out.println("[" + this.Id + " ACTION] RELEASE received from "
+                            + receivedRequest.process);
+                    
+                    write("[" + this.Id + " ACTION] RELEASE received from "
                             + receivedRequest.process);
                     if (!list.isEmpty()) {
                         list.poll();
@@ -292,11 +300,13 @@ public class Process {
     public synchronized void sendRequest(Message req, int port, String ip) {
         new Thread(() -> {
             System.out.println("Sending Request: " + req + " to " + ip + ":" + port);
+            write("Sending Request: " + req + " to " + ip + ":" + port);
         }).start();
     }
 
     private void requestAccessToCS() {
         System.out.println("[ " + Id + " ][ACTION] Need access to Critic Section, sending request...");
+        write("[ " + Id + " ][ACTION] Need access to Critic Section, sending request...");
         Message req = request();
         listProcess.stream().filter(
                 (p) -> (!this.equals(p))
@@ -371,8 +381,11 @@ public class Process {
                     break;
                 }
             }
+            
             //Enviar ACK
             System.out.println("Send ACK from "
+                    + this.Id + " to " + receivedRequest.process);
+            write("Send ACK from "
                     + this.Id + " to " + receivedRequest.process);
             this.sendRequest(req, port, ip);
         }
@@ -403,7 +416,7 @@ public class Process {
        // System.out.println("[save ACK]request queue: "+list+" top: "+topRequest);
         //Si el top request no es el mismo proceso entonces no puede entrar
         //en la CS
-            if (topRequest.process != this.Id) {
+            if (!topRequest.process.equals( this.Id)) {
                 return;
             }
         } else {
@@ -423,10 +436,13 @@ public class Process {
         this.inCS = true;
         System.out.println("-----------------------------------------");
         System.out.println("-----------------------------------------");
+        write("-----------------------------------------");
         System.out.println("[INFO ]" + this.Id + " is entering Critic Section @ " + dateFormater.format(new Date()));
+        write("[INFO ]" + this.Id + " is entering Critic Section @ " + dateFormater.format(new Date()));
         goToCS();
         //quita su propia solicitud de su cola
         System.out.println("[INFO ]" + this.Id + " is leaving Critic Section @ " + dateFormater.format(new Date()));
+        write("[INFO ]" + this.Id + " is leaving Critic Section @ " + dateFormater.format(new Date()));
         Message releasetmp;
         //if(!list.isEmpty())
         releasetmp = list.poll();
@@ -435,6 +451,7 @@ public class Process {
         sendPendingACK();
         System.out.println("-----------------------------------------");
         System.out.println("-----------------------------------------");
+        write("-----------------------------------------");
     }
 
     /**
@@ -502,6 +519,7 @@ public class Process {
         ).forEach(
                 p -> {
                     System.out.println("Send Release from " + this.Id + " to " + p.Id);
+                    write("Send Release from " + this.Id + " to " + p.Id);
                     getClock().sendAction();
                     this.sendRequest(new Message(this.Id, RELEASE, clock), p.PORT, p.IP);
                 }
@@ -519,6 +537,7 @@ public class Process {
         for (Message message : list) {
             if (!message.ACKsent) {
                 System.out.println("[ INFO ] Sending pending ACK to " + message.process);
+                write("[ INFO ] Sending pending ACK to " + message.process);
                 sendResponse(message);
                 message.ACKsent = true;
                 //break;
@@ -531,6 +550,7 @@ public class Process {
             Message message = list.peek();
             if ((message.process.equals(this.Id)) && (listACK.size() >= listProcess.size() - 1)) {
                 System.out.println("[INFO] all ACK received");
+                write("[INFO] all ACK received");
                 criticSection();
                 randomWait(3);
                 requestAccessToCS();
@@ -597,7 +617,7 @@ public class Process {
      *
      *
      */
-    private void createFile() {
+    private void createFile(String file) {
         Path f = Paths.get(file);
         if (!Files.exists(f)) {
             try {
@@ -655,6 +675,22 @@ public class Process {
                 BufferedWriter writter = Files.newBufferedWriter(f, StandardOpenOption.APPEND);
                 ) {
             String text = "[" + Id + "]" + "[" + dateFormater.format(new Date()) + "]\n";
+            writter.append(text);
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+    
+    /**
+     * Escribir el log de cada proceso en el archivo respectivo
+     * @param event 
+     */
+    public void write(String event) {
+        Path f = Paths.get(this.Id + ".log");
+        try (
+                BufferedWriter writter = Files.newBufferedWriter(f, StandardOpenOption.APPEND);
+                ) {
+            String text = "[" + dateFormater.format(new Date()) + "]" + event + "\n";
             writter.append(text);
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
