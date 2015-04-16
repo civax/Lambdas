@@ -1,66 +1,53 @@
-[2015.04.16 at 01:36:49][ P2 ][ACTION] Need access to Critic Section, sending request...
-[2015.04.16 at 01:36:49]Sending Request: (process=P2, type=REQUEST, ACK status=false date: 1) to 169.254.151.252:10000
-[2015.04.16 at 01:36:50]Sending Request: (process=P2, type=REQUEST, ACK status=false date: 1) to 169.254.151.252:10002
-[2015.04.16 at 01:36:58]Send ACK from P2 to P2
-[2015.04.16 at 01:36:58]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:37:06]Send ACK from P2 to P2
-[2015.04.16 at 01:37:06]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:42:01][ P2 ][ACTION] Need access to Critic Section, sending request...
-[2015.04.16 at 01:42:01]Sending Request: (process=P2, type=REQUEST, ACK status=false date: 1) to 169.254.151.252:10000
-[2015.04.16 at 01:42:02]Sending Request: (process=P2, type=REQUEST, ACK status=false date: 1) to 169.254.151.252:10002
-[2015.04.16 at 01:42:11]Send ACK from P2 to P2
-[2015.04.16 at 01:42:11]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:42:19]Send ACK from P2 to P2
-[2015.04.16 at 01:42:19]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:42:27]Send ACK from P2 to P2
-[2015.04.16 at 01:42:27]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:45:50][ P2 ][ACTION] Need access to Critic Section, sending request...
-[2015.04.16 at 01:45:50]Sending Request: (process=P2, type=REQUEST, ACK status=false date: 1) to 169.254.151.252:10000
-[2015.04.16 at 01:45:51]Sending Request: (process=P2, type=REQUEST, ACK status=false date: 1) to 169.254.151.252:10002
-[2015.04.16 at 01:46:00]Send ACK from P2 to P2
-[2015.04.16 at 01:46:00]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:46:08]Send ACK from P2 to P2
-[2015.04.16 at 01:46:08]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:46:16]Send ACK from P2 to P2
-[2015.04.16 at 01:46:16]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:46:22]Send ACK from P2 to P2
-[2015.04.16 at 01:46:22]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:59:41][ P2 ][ACTION] Need access to Critic Section, sending request...
-[2015.04.16 at 01:59:41]Sending Request: (process=P2, type=REQUEST, ACK status=false date: 1) to 169.254.151.252:10000
-[2015.04.16 at 01:59:42]Sending Request: (process=P2, type=REQUEST, ACK status=false date: 1) to 169.254.151.252:10002
-[2015.04.16 at 01:59:51]Send ACK from P2 to P2
-[2015.04.16 at 01:59:51]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 01:59:59]Send ACK from P2 to P2
-[2015.04.16 at 01:59:59]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:00:07]Send ACK from P2 to P2
-[2015.04.16 at 02:00:07]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:00:14]Send ACK from P2 to P2
-[2015.04.16 at 02:00:14]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:00:21]Send ACK from P2 to P2
-[2015.04.16 at 02:00:21]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:00:29]Send ACK from P2 to P2
-[2015.04.16 at 02:00:29]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:00:37]Send ACK from P2 to P2
-[2015.04.16 at 02:00:37]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:00:45]Send ACK from P2 to P2
-[2015.04.16 at 02:00:45]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:00:53]Send ACK from P2 to P2
-[2015.04.16 at 02:00:53]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:00:59]Send ACK from P2 to P2
-[2015.04.16 at 02:00:59]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:01:07]Send ACK from P2 to P2
-[2015.04.16 at 02:01:07]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:01:13]Send ACK from P2 to P2
-[2015.04.16 at 02:01:13]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:01:21]Send ACK from P2 to P2
-[2015.04.16 at 02:01:21]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:01:29]Send ACK from P2 to P2
-[2015.04.16 at 02:01:29]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:01:37]Send ACK from P2 to P2
-[2015.04.16 at 02:01:37]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:01:44]Send ACK from P2 to P2
-[2015.04.16 at 02:01:44]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:01:52]Send ACK from P2 to P2
-[2015.04.16 at 02:01:52]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
-[2015.04.16 at 02:01:59]Send ACK from P2 to P2
-[2015.04.16 at 02:01:59]Sending Request: (process=P2, type=ACK, ACK status=false date: 1) to 169.254.151.252:10001
+[2015.04.16 at 17:55:47]Process P2 running at: 10.157.135.1:3001
+[2015.04.16 at 17:55:47][ P2 ACTION: ] listening...
+[2015.04.16 at 17:55:48]Synching with: 10.157.135.1:3000
+[2015.04.16 at 17:55:52][ Offering to BUFFER ][]
+[2015.04.16 at 17:55:54][ Offering to BUFFER ][muExclusion.RegistryCard@2f0a6285]
+[2015.04.16 at 17:55:55][ Polling BUFFER ][muExclusion.RegistryCard@2f0a6285, muExclusion.RegistryCard@4609e439]
+[2015.04.16 at 17:55:55][ P2 ACTION: ] Registry Card received, processing...
+[2015.04.16 at 17:55:55][ P2 ][2015.04.16 at 17:55:55] Process P1 added to work group
+[2015.04.16 at 17:55:55]# of processes in the group: 2 waiting for: 3
+[2015.04.16 at 17:55:57][ Polling BUFFER ][muExclusion.RegistryCard@4609e439]
+[2015.04.16 at 17:55:57][ P2 ACTION: ] Registry Card received, processing...
+[2015.04.16 at 17:56:12][ Offering to BUFFER ][]
+[2015.04.16 at 17:56:14][ Polling BUFFER ][muExclusion.RegistryCard@583426f4]
+[2015.04.16 at 17:56:14][ P2 ACTION: ] Registry Card received, processing...
+[2015.04.16 at 17:56:18][ Offering to BUFFER ][]
+[2015.04.16 at 17:56:18][ Polling BUFFER ][muExclusion.RegistryCard@39e7eb85]
+[2015.04.16 at 17:56:18][ P2 ACTION: ] Registry Card received, processing...
+[2015.04.16 at 17:56:20][ Offering to BUFFER ][]
+[2015.04.16 at 17:56:21][ Polling BUFFER ][muExclusion.RegistryCard@e9fdb89]
+[2015.04.16 at 17:56:21][ P2 ACTION: ] Registry Card received, processing...
+[2015.04.16 at 17:56:21][ P2 ][2015.04.16 at 17:56:21] Process P3 added to work group
+[2015.04.16 at 17:56:21]# of processes in the group: 3 waiting for: 3
+[2015.04.16 at 17:56:21]# of processes quota reached: 3 stop waiting for processes
+[2015.04.16 at 17:56:21]Ready to start: :D
+[2015.04.16 at 17:56:25][ Offering to BUFFER ][]
+[2015.04.16 at 17:56:26][ Polling BUFFER ][(process=P3, type=REQUEST, ACK status=false date: 1 id=P3:1)]
+[2015.04.16 at 17:56:26][INFO: ] request received : (process=P3, type=REQUEST, ACK status=false date: 1 id=P3:1) in P2
+[2015.04.16 at 17:56:26][P2 ACTION] REQUEST received from P3
+[2015.04.16 at 17:56:26]Send ACK from P2 to P3((process=P3, type=REQUEST, ACK status=true date: 1 id=P3:1))
+[2015.04.16 at 17:56:26]Sending message: (process=P2, type=ACK, ACK status=false date: 1 id=P3:1) to 10.157.135.1:3002
+[2015.04.16 at 17:56:28][ P2 ][ACTION] Need access to Critic Section, sending request...
+[2015.04.16 at 17:56:28]Sending message: (process=P2, type=REQUEST, ACK status=false date: 3 id=P2:3) to 10.157.135.1:3000
+[2015.04.16 at 17:56:29][ Offering to BUFFER ][]
+[2015.04.16 at 17:56:29][ Polling BUFFER ][(process=P1, type=REQUEST, ACK status=false date: 10 id=P1:10)]
+[2015.04.16 at 17:56:29][INFO: ] request received : (process=P1, type=REQUEST, ACK status=false date: 10 id=P1:10) in P2
+[2015.04.16 at 17:56:29][P2 ACTION] REQUEST received from P1
+[2015.04.16 at 17:56:29]Send ACK from P2 to P1((process=P1, type=REQUEST, ACK status=true date: 10 id=P1:10))
+[2015.04.16 at 17:56:29]Sending message: (process=P2, type=ACK, ACK status=false date: 10 id=P1:10) to 10.157.135.1:3000
+[2015.04.16 at 17:56:30]Sending message: (process=P2, type=REQUEST, ACK status=false date: 3 id=P2:3) to 10.157.135.1:3002
+[2015.04.16 at 17:56:31][ Offering to BUFFER ][]
+[2015.04.16 at 17:56:31][ Offering to BUFFER ][(process=P1, type=ACK, ACK status=false date: 3 id=P2:3)]
+[2015.04.16 at 17:56:34][ Polling BUFFER ][(process=P1, type=ACK, ACK status=false date: 3 id=P2:3), (process=P3, type=REQUEST, ACK status=false date: 3 id=P3:3)]
+[2015.04.16 at 17:56:34][INFO: ] request received : (process=P1, type=ACK, ACK status=false date: 3 id=P2:3) in P2
+[2015.04.16 at 17:56:34][P2 ACTION] ACK received from P1
+[2015.04.16 at 17:56:36][ Offering to BUFFER ][(process=P3, type=REQUEST, ACK status=false date: 3 id=P3:3)]
+[2015.04.16 at 17:56:36][ Polling BUFFER ][(process=P3, type=REQUEST, ACK status=false date: 3 id=P3:3), (process=P3, type=ACK, ACK status=false date: 3 id=P2:3)]
+[2015.04.16 at 17:56:36][INFO: ] request received : (process=P3, type=REQUEST, ACK status=false date: 3 id=P3:3) in P2
+[2015.04.16 at 17:56:36][P2 ACTION] REQUEST received from P3
+[2015.04.16 at 17:56:36]Send ACK from P2 to P3((process=P3, type=REQUEST, ACK status=true date: 3 id=P3:3))
+[2015.04.16 at 17:56:36]Sending message: (process=P2, type=ACK, ACK status=false date: 3 id=P3:3) to 10.157.135.1:3002
+[2015.04.16 at 17:56:40][ Polling BUFFER ][(process=P3, type=ACK, ACK status=false date: 3 id=P2:3)]
+[2015.04.16 at 17:56:40][INFO: ] request received : (process=P3, type=ACK, ACK status=false date: 3 id=P2:3) in P2
+[2015.04.16 at 17:56:40][P2 ACTION] ACK received from P3

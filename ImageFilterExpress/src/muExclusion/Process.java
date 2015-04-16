@@ -16,16 +16,16 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static muExclusion.Process.randomWait;
@@ -49,20 +49,20 @@ public class Process {
     private static final String ACK = "ACK";
     private static final String RELEASE = "RELEASE";
     private static final String REQUEST = "REQUEST";
-    private static final PriorityQueue<Message> list;
-    private static final Set<Message> listACK;
+    private static final PriorityQueue<Message> requestQueue;
+    private static final HashMap<String,Integer> ACKmap;
     private static final List<Process> listProcess;
-    private static final LinkedList<Sendable> listBuffer;
+    private static final LinkedBlockingQueue<Sendable> inputBuffer;
     private static final List<Message> sentRequests;
     private static final Clock clock;
     private static final Random random;
 
     //Inicialización de variables static
     static {
-        listACK = new HashSet<>();
-        list = new PriorityQueue<>();
+        ACKmap = new HashMap<>();
+        requestQueue = new PriorityQueue<>();
         listProcess = new ArrayList<>();
-        listBuffer = new LinkedList<>();
+        inputBuffer = new LinkedBlockingQueue<>();
         clock = new Clock(0);
         random = new Random(2000);
         sentRequests = new ArrayList<>();
@@ -157,11 +157,11 @@ public class Process {
      * recibe el proceso y lo agrega al buffer
      *
      */
-    public synchronized void produce() {
+    public void produce() {
         //Recibe objeto y lo agrega al buffer(linkedlist)
         Sendable remoteObject = connector.receive();
-        System.out.println("receive: "+remoteObject);
-        listBuffer.offer(remoteObject);
+        write("[ Offering to BUFFER ]"+inputBuffer);
+        inputBuffer.offer(remoteObject);
     }
     /**
      *
@@ -171,15 +171,14 @@ public class Process {
      * elemento a procesar
      *
      */
-    public synchronized void consume() {
-        if (!listBuffer.isEmpty()) {
-            Sendable tempRemoteObject = listBuffer.poll();
+    public  void consume() {
+            write("[ Polling BUFFER ]"+inputBuffer);
+            Sendable tempRemoteObject = inputBuffer.poll();
             if (tempRemoteObject instanceof RegistryCard) {
                 registerProcess(tempRemoteObject);
             } else if (tempRemoteObject instanceof Message) {
                 receiveRequest(tempRemoteObject);
             }
-        }
     }
     /**
      *
@@ -212,7 +211,7 @@ public class Process {
                     write("Ready to start: :D");
                    randomWait(4);
                     requestAccessToCS();
-                    startMonitorDaemon();
+                 //   startMonitorDaemon();
                 }
             }).start();
             Thread status = new Thread(() -> {
@@ -222,8 +221,8 @@ public class Process {
                         String output = scanner.nextLine().toUpperCase();
                         switch (output) {
                             case "STATUS":
-                                System.out.println("ACK list: " + listACK);
-                                System.out.println("Queue: " + list);
+                                System.out.println("ACK list: " + ACKmap);
+                                System.out.println("Queue: " + requestQueue);
                                 System.out.println("in CS: " + inCS);
                                 System.out.println("processes: " + listProcess);
                                 break;
@@ -231,7 +230,7 @@ public class Process {
                                 resume();
                                 break;
                             case "RELEASE":
-                                list.poll();
+                                requestQueue.poll();
                                 break;
                         }
                     }
@@ -259,7 +258,7 @@ public class Process {
         //dejar thread 
         new Thread(() -> {
             Message receivedRequest = (Message) remoteObject;
-            System.out.println(this.list);
+            System.out.println(this.requestQueue);
             System.out.println("[INFO: ] request received : " + receivedRequest + " in " + this.Id);
             write("[INFO: ] request received : " + receivedRequest + " in " + this.Id);
             
@@ -268,10 +267,9 @@ public class Process {
             switch (receivedRequest.type) {
             //Solicitud de acceso a la CS
                 case REQUEST:
-                    getClock().receiveAction(8);
-                    this.list.offer(receivedRequest);
+                    this.requestQueue.offer(receivedRequest);
                     System.out.println("[" + this.Id + " ACTION] REQUEST received from "
-                            + receivedRequest.process);
+                            + receivedRequest.process+" ("+receivedRequest+")");
                     write("[" + this.Id + " ACTION] REQUEST received from "
                             + receivedRequest.process);
                     sendResponse(receivedRequest);
@@ -290,8 +288,8 @@ public class Process {
                     
                     write("[" + this.Id + " ACTION] RELEASE received from "
                             + receivedRequest.process);
-                    if (!list.isEmpty()) {
-                        list.poll();
+                    if (!requestQueue.isEmpty()) {
+                        requestQueue.poll();
                     }
                     break;
             }
@@ -301,16 +299,18 @@ public class Process {
     //Metodos del algoritmo
     public Message request() {
         //Agregar request a su misma cola
-        list.forEach(e -> getClock().receiveAction(e.getClock().getTime()));
-        Message req = new Message(Id, REQUEST, getClock());
-        list.offer(req);
+        requestQueue.forEach(e -> getClock().receiveAction(e.getClock().getTime()));
+        Message req = new Message(Id, REQUEST, getClock(),Id+":"+getClock().getTime());
+        ACKmap.put(req.getID(), 0);
+        requestQueue.offer(req);
         return req;
     }
 
     public  void sendRequest(Message req, int port, String ip) {
         new Thread(() -> {
-            System.out.println("Sending Request: " + req + " to " + ip + ":" + port);
-            write("Sending Request: " + req + " to " + ip + ":" + port);
+            System.out.println("Sending message: " + req + " to " + ip + ":" + port);
+            write("Sending message: " + req + " to " + ip + ":" + port);
+            connector.send(req, port, ip);
         }).start();
     }
 
@@ -381,7 +381,7 @@ public class Process {
     private  void sendResponse(Message receivedRequest) {
         //Si no esta en la CS enviar mensaje ACK
         if (!this.inCS) {// && notOtherACK()) {
-            Message req = new Message(this.Id, ACK, receivedRequest.getClock());
+            Message req = new Message(this.Id, ACK, receivedRequest.getClock(),receivedRequest.getID());
             String ip = "";
             int port = -1;
             receivedRequest.ACKsent = true;
@@ -398,8 +398,9 @@ public class Process {
             System.out.println("Send ACK from "
                     + this.Id + " to " + receivedRequest.process);
             write("Send ACK from "
-                    + this.Id + " to " + receivedRequest.process);
-            this.sendRequest(req, port, ip);
+                    + this.Id + " to " + receivedRequest.process+"("+receivedRequest+")");
+            if(this.PORT!=port)
+                this.sendRequest(req, port, ip);
         }
     }
     /**
@@ -418,13 +419,14 @@ public class Process {
      *
      */
     private void saveACK(Message receivedRequest) {
-        if (!listACK.contains(receivedRequest)) {
-            listACK.add(receivedRequest);
+        Integer count=ACKmap.get(receivedRequest.getID());
+        if (count!=null) {
+            ACKmap.put(receivedRequest.getID(),count++);
         }
         //System.out.println("list of ack: "+listACK);
-        if (!list.isEmpty()) {
-            Message topRequest = list.peek();
-            System.out.println(topRequest);
+        if (!requestQueue.isEmpty()) {
+            Message topRequest = requestQueue.peek();
+           // System.out.println(topRequest);
        // System.out.println("[save ACK]request queue: "+list+" top: "+topRequest);
         //Si el top request no es el mismo proceso entonces no puede entrar
         //en la CS
@@ -436,10 +438,10 @@ public class Process {
             write("ERROR lista vacia de requests D:");
             return;
         }
-        if (listACK.size() >= listProcess.size() - 1) {
+        if (ACKmap.get(receivedRequest.getID())>2) {
             //quitar los ACK en el lista de ACK
-            System.out.println("[INFO] all ACK received");
-            write("[INFO] all ACK received");
+            System.out.println("[INFO] all ACK received for "+receivedRequest.getID());
+            write("[INFO] all ACK received for "+receivedRequest.getID());
             criticSection();
             randomWait(3);
             requestAccessToCS();
@@ -459,7 +461,7 @@ public class Process {
         write("[INFO ]" + this.Id + " is leaving Critic Section @ " + dateFormater.format(new Date()));
         Message releasetmp;
         //if(!list.isEmpty())
-        releasetmp = list.poll();
+        releasetmp = requestQueue.poll();
         sendRelease(releasetmp.getClock());
         this.inCS = false;
         sendPendingACK();
@@ -505,7 +507,7 @@ public class Process {
     }
 
     public static void randomWait() {
-        int wait = random.nextInt(500) + 500;
+        int wait = random.nextInt(2000) + 500;
         try {
             Thread.sleep(wait);
         } catch (InterruptedException e) {
@@ -514,7 +516,7 @@ public class Process {
         }
     }
 
-    private static  Clock getClock() {
+    private synchronized static  Clock getClock() {
         return clock;
     }
 
@@ -539,7 +541,7 @@ public class Process {
                     System.out.println("Send Release from " + this.Id + " to " + p.Id);
                     write("Send Release from " + this.Id + " to " + p.Id);
                     getClock().sendAction();
-                    this.sendRequest(new Message(this.Id, RELEASE, clock), p.PORT, p.IP);
+                    this.sendRequest(new Message(this.Id, RELEASE, clock,this.Id+":"+clock.getTime()), p.PORT, p.IP);
                 }
         );
     }
@@ -552,7 +554,7 @@ public class Process {
      *
      */
     private void sendPendingACK() {
-        for (Message message : list) {
+        for (Message message : requestQueue) {
             if (!message.ACKsent) {
                 System.out.println("[ INFO ] Sending pending ACK to " + message.process);
                 write("[ INFO ] Sending pending ACK to " + message.process);
@@ -564,9 +566,9 @@ public class Process {
     }
 
     private void resume() {
-        if (!list.isEmpty()) {
-            Message message = list.peek();
-            if ((message.process.equals(this.Id)) && (listACK.size() >= listProcess.size() - 1)) {
+        if (!requestQueue.isEmpty()) {
+            Message message = requestQueue.peek();
+            if ((message.process.equals(this.Id)) && (ACKmap.size() >= listProcess.size() - 1)) {
                 System.out.println("[INFO] all ACK received");
                 write("[INFO] all ACK received");
                 criticSection();
@@ -595,7 +597,7 @@ public class Process {
      *
      */
     private boolean notOtherACK() {
-        for (Message message : list) {
+        for (Message message : requestQueue) {
             if (message.ACKsent) {
                 return false;
             }
@@ -609,7 +611,7 @@ public class Process {
                     while (true) {
                         randomWait(10);
 //                        resume();
-                        Message curMessage = list.peek();
+                        Message curMessage = requestQueue.peek();
                         if (!Objects.isNull(curMessage) && curMessage.process.equals(this.Id)) {
                             sendResponse(curMessage);
                         }
@@ -797,7 +799,6 @@ public class Process {
         public void run() {
             while (true) {
                 produce();
-                randomWait(2);
             }
         }
     }
@@ -808,7 +809,9 @@ public class Process {
         @Override
         public void run() {
             while (true) {
-                consume();
+                if (!inputBuffer.isEmpty()) {
+                    consume();
+                }
                 randomWait(2);
             }
         }

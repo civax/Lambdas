@@ -5,7 +5,6 @@
  */
 package muExclusion;
 
-import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
 import net.Sendable;
@@ -45,13 +44,17 @@ public class Message implements Comparable<Message>, Sendable {
      * mantendra en R
      */
     boolean ACKsent;
-
-    public Message(String process, String type,Clock clock) {
+    private String ID;
+    public String getID(){
+        return ID;
+    }
+    public Message(String process, String type,Clock clock, String ID) {
         this.process = process;
 //        this.date = new Date();
         this.type = type;
         this.ACKsent = false;
         this.clock = new Clock(clock.getTime());
+        this.ID = ID;
     }
 
     public String getProcess() {
@@ -107,7 +110,7 @@ public class Message implements Comparable<Message>, Sendable {
     @Override
     public String toString() {
         return  "(process=" + process + ", type=" + type + ", ACK status=" + 
-                ACKsent+" date: "+clock.getTime() +")";//+ ", firstMsg=" + firstMsg + '}';
+                ACKsent+" date: "+clock.getTime() +" id="+ID+ ")";//+ ", firstMsg=" + firstMsg + '}';
     }
 
     /**
