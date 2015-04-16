@@ -93,7 +93,7 @@ public class Process {
         randomWait();
         if (syncIP != null && syncPORT != 0) {
             isSyncher = false;
-            //syncProcess(this, syncIP, syncPORT);
+            syncProcess(this, syncIP, syncPORT);
         } else {
             isSyncher = true;
         }
@@ -157,6 +157,7 @@ public class Process {
     public synchronized void produce() {
         //Recibe objeto y lo agrega al buffer(linkedlist)
         Sendable remoteObject = connector.receive();
+        System.out.println("receive: "+remoteObject);
         listBuffer.offer(remoteObject);
     }
     /**
@@ -289,7 +290,7 @@ public class Process {
         return req;
     }
 
-    public synchronized void sendRequest(Message req, int port, String ip) {
+    public  void sendRequest(Message req, int port, String ip) {
         new Thread(() -> {
             System.out.println("Sending Request: " + req + " to " + ip + ":" + port);
         }).start();
@@ -320,7 +321,7 @@ public class Process {
         return cloneList;
     }
 
-    private synchronized void sendCard(Process process, String ip, int port) {
+    private  void sendCard(Process process, String ip, int port) {
         RegistryCard card = processToCard(process);
         getClock().sendAction();
         connector.send(card, port, ip);
@@ -331,7 +332,7 @@ public class Process {
         sendCard(process, syncIP, syncPort);
     }
 
-    private synchronized void syncGroup(List<Process> list, String syncIP, int syncPort) {
+    private  void syncGroup(List<Process> list, String syncIP, int syncPort) {
         System.out.println("Synching with: " + syncIP + ":" + syncPort);
         list.forEach(
                 p -> {
@@ -356,7 +357,7 @@ public class Process {
      * @param receivedRequest
      *
      */
-    private synchronized void sendResponse(Message receivedRequest) {
+    private  void sendResponse(Message receivedRequest) {
         //Si no esta en la CS enviar mensaje ACK
         if (!this.inCS) {// && notOtherACK()) {
             Message req = new Message(this.Id, ACK, receivedRequest.getClock());
@@ -479,7 +480,7 @@ public class Process {
         }
     }
 
-    private static synchronized Clock getClock() {
+    private static  Clock getClock() {
         return clock;
     }
 
