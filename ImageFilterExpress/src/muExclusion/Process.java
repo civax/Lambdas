@@ -186,7 +186,7 @@ public class Process {
      *
      */
     private void registerProcess(Object remoteObject) {
-        if (listening) {
+        if (true) {
             new Thread(() -> {
                 System.out.println("[ " + Id + " ACTION: ] Registry Card received, processing...");
                 RegistryCard card = (RegistryCard) remoteObject;
@@ -201,7 +201,7 @@ public class Process {
                 }
                 if (!(listProcess.size() < waitfor)) {
                     System.out.println("# of processes quota reached: " + listProcess.size() + " stop waiting for processes");
-                    stopListening();
+//                    stopListening();
                     System.out.print("Ready to start: ");     
                    randomWait(4);
                     requestAccessToCS();
@@ -767,7 +767,7 @@ public class Process {
     class Producer implements Runnable {
         @Override
         public void run() {
-            while (listening) {
+            while (true) {
                 produce();
                 randomWait(2);
             }
@@ -779,7 +779,7 @@ public class Process {
 
         @Override
         public void run() {
-            while (listening) {
+            while (true) {
                 consume();
                 randomWait(2);
             }
