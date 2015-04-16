@@ -88,6 +88,7 @@ public class Process {
         this.PORT = port;
         connector = new UDPConnector(port);
         System.out.println("Process " + this.Id + " running at: " + this.IP + ":" + this.PORT);
+        write("Process " + this.Id + " running at: " + this.IP + ":" + this.PORT);
         addTarget(this);
         startListening(3);
             //sync with already started processes
@@ -130,6 +131,7 @@ public class Process {
     public void startListening() {
         listening = true;
         System.out.println("[ " + Id + " ACTION: ] listening...");
+        write("[ " + Id + " ACTION: ] listening...");
         Producer producer = new Producer();
         Consumer consumer = new Consumer();
         Thread producerThread = new Thread(producer);
@@ -189,20 +191,25 @@ public class Process {
         if (true) {
             new Thread(() -> {
                 System.out.println("[ " + Id + " ACTION: ] Registry Card received, processing...");
+                write("[ " + Id + " ACTION: ] Registry Card received, processing...");
                 RegistryCard card = (RegistryCard) remoteObject;
                 Process receivedProcess = cardToProcess(card);
                 if (!listProcess.contains(receivedProcess) && (listProcess.size() <= waitfor)) {
                     addTarget(receivedProcess);
                     System.out.println("[ " + Id + " ][" + dateFormater.format(new Date()) + "] Process " + receivedProcess.Id + " added to work group");
+                    write("[ " + Id + " ][" + dateFormater.format(new Date()) + "] Process " + receivedProcess.Id + " added to work group");
                     System.out.println("# of processes in the group: " + listProcess.size() + " waiting for: " + waitfor);
+                    write("# of processes in the group: " + listProcess.size() + " waiting for: " + waitfor);
                     if (isSyncher) {
                         syncGroup(cloneList(listProcess), receivedProcess.IP, receivedProcess.PORT);
                     }
                 }
                 if (!(listProcess.size() < waitfor)) {
                     System.out.println("# of processes quota reached: " + listProcess.size() + " stop waiting for processes");
-//                    stopListening();
+                    write("# of processes quota reached: " + listProcess.size() + " stop waiting for processes");
+                    stopListening();
                     System.out.print("Ready to start: ");     
+                    write("Ready to start: :D");
                    randomWait(4);
                     requestAccessToCS();
                     startMonitorDaemon();
@@ -234,6 +241,7 @@ public class Process {
             status.start();
         } else {
             System.out.println("# of processes quota reached: " + listProcess.size() + " no more processes required");
+            write("# of processes quota reached: " + listProcess.size() + " no more processes required");
         }
 
     }
@@ -254,6 +262,7 @@ public class Process {
             System.out.println(this.list);
             System.out.println("[INFO: ] request received : " + receivedRequest + " in " + this.Id);
             write("[INFO: ] request received : " + receivedRequest + " in " + this.Id);
+            
         //Acción dependiendo del tipo de mensaje
             getClock().receiveAction(receivedRequest.getClock().getTime());
             switch (receivedRequest.type) {
@@ -339,11 +348,13 @@ public class Process {
 
     private void syncProcess(Process process, String syncIP, int syncPort) {
         System.out.println("Synching with: " + syncIP + ":" + syncPort);
+        write("Synching with: " + syncIP + ":" + syncPort);
         sendCard(process, syncIP, syncPort);
     }
 
     private  void syncGroup(List<Process> list, String syncIP, int syncPort) {
         System.out.println("Synching with: " + syncIP + ":" + syncPort);
+        write("Synching with: " + syncIP + ":" + syncPort);
         list.forEach(
                 p -> {
                     listProcess.forEach(p2 -> {
@@ -422,11 +433,13 @@ public class Process {
             }
         } else {
             System.out.println("ERROR lista vacia de requests");
+            write("ERROR lista vacia de requests D:");
             return;
         }
         if (listACK.size() >= listProcess.size() - 1) {
             //quitar los ACK en el lista de ACK
             System.out.println("[INFO] all ACK received");
+            write("[INFO] all ACK received");
             criticSection();
             randomWait(3);
             requestAccessToCS();
@@ -474,14 +487,17 @@ public class Process {
         switch (num) {
             case 1:
                 System.out.println("[INFO] " + this.Id + " is reading the shared file");
+                write("[INFO] " + this.Id + " is reading the shared file");
                 read();
                 break;
             case 2:
                 System.out.println("[INFO] " + this.Id + " is writing into the shared file");
+                write("[INFO] " + this.Id + " is writing into the shared file");
                 write();
                 break;
             case 3:
                 System.out.println("[INFO] " + this.Id + " is updating the shared file");
+                write("[INFO] " + this.Id + " is updating the shared file");
                 update();
                 break;
         }
@@ -494,6 +510,7 @@ public class Process {
             Thread.sleep(wait);
         } catch (InterruptedException e) {
             System.out.println("ERROR:" + e.getMessage());
+            //write("ERROR:" + e.getMessage());
         }
     }
 
@@ -627,6 +644,15 @@ public class Process {
                 Logger.getLogger(Process.class.getName()).log(Level.SEVERE, "File creation failed", ex);
             }
         }
+        else{
+            try {
+                Files.delete(f);
+                Files.createFile(f);
+            } catch (IOException ex) {
+                Logger.getLogger(Process.class.getName()).log(Level.SEVERE, "File creation failed", ex);
+            }
+        }
+            
     }
 
     /**
@@ -749,6 +775,7 @@ public class Process {
                 Process process = new Process(processId, IP.getHostAddress(), port, syncIP, syncPORT);
             } catch (NumberFormatException e) {
                 System.err.println("Indicar el identificador del proceso [P1,P2,P3]  el puerto [10000-10003] y el host de sincronizacion");
+                
             }
             //Process p = registerProcess();
             //p.request();
@@ -760,6 +787,7 @@ public class Process {
             Process process = new Process(processId, IP.getHostAddress(), port, syncIP, syncPORT);
         } else {
             System.err.println("Indicar el identificador del proceso [P1,P2,P3]  el puerto [10000-10003] y el host de sincronizacion");
+            
         }
     }
 
