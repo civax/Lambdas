@@ -26,3 +26,39 @@
 [2015.04.16 at 01:59:42][ P1 ][ACTION] Need access to Critic Section, sending request...
 [2015.04.16 at 01:59:42]Sending Request: (process=P1, type=REQUEST, ACK status=false date: 8) to 169.254.151.252:10001
 [2015.04.16 at 01:59:43]Sending Request: (process=P1, type=REQUEST, ACK status=false date: 8) to 169.254.151.252:10002
+[2015.04.16 at 01:59:52]Send ACK from P1 to P1
+[2015.04.16 at 01:59:52]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:00:00]Send ACK from P1 to P1
+[2015.04.16 at 02:00:00]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:00:08]Send ACK from P1 to P1
+[2015.04.16 at 02:00:08]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:00:14]Send ACK from P1 to P1
+[2015.04.16 at 02:00:14]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:00:21]Send ACK from P1 to P1
+[2015.04.16 at 02:00:21]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:00:30]Send ACK from P1 to P1
+[2015.04.16 at 02:00:30]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:00:38]Send ACK from P1 to P1
+[2015.04.16 at 02:00:38]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:00:46]Send ACK from P1 to P1
+[2015.04.16 at 02:00:46]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:00:53]Send ACK from P1 to P1
+[2015.04.16 at 02:00:53]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:01:00]Send ACK from P1 to P1
+[2015.04.16 at 02:01:00]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:01:07]Send ACK from P1 to P1
+[2015.04.16 at 02:01:07]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:01:14]Send ACK from P1 to P1
+[2015.04.16 at 02:01:14]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:01:22]Send ACK from P1 to P1
+[2015.04.16 at 02:01:22]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:01:29]Send ACK from P1 to P1
+[2015.04.16 at 02:01:29]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:01:37]Send ACK from P1 to P1
+[2015.04.16 at 02:01:37]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:01:45]Send ACK from P1 to P1
+[2015.04.16 at 02:01:45]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:01:53]Send ACK from P1 to P1
+[2015.04.16 at 02:01:53]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000
+[2015.04.16 at 02:02:00]Send ACK from P1 to P1
+[2015.04.16 at 02:02:00]Sending Request: (process=P1, type=ACK, ACK status=false date: 8) to 169.254.151.252:10000

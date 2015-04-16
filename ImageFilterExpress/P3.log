@@ -51,3 +51,75 @@
 [2015.04.16 at 01:59:43][ P3 ][ACTION] Need access to Critic Section, sending request...
 [2015.04.16 at 01:59:43]Sending Request: (process=P3, type=REQUEST, ACK status=false date: 2) to 169.254.151.252:10000
 [2015.04.16 at 01:59:43]Sending Request: (process=P3, type=REQUEST, ACK status=false date: 2) to 169.254.151.252:10001
+[2015.04.16 at 01:59:49]Send ACK from P3 to P3
+[2015.04.16 at 01:59:49]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 01:59:52]Send ACK from P3 to P3
+[2015.04.16 at 01:59:52]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 01:59:57]Send ACK from P3 to P3
+[2015.04.16 at 01:59:57]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:00]Send ACK from P3 to P3
+[2015.04.16 at 02:00:00]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:05]Send ACK from P3 to P3
+[2015.04.16 at 02:00:05]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:07]Send ACK from P3 to P3
+[2015.04.16 at 02:00:07]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:12]Send ACK from P3 to P3
+[2015.04.16 at 02:00:12]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:15]Send ACK from P3 to P3
+[2015.04.16 at 02:00:15]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:20]Send ACK from P3 to P3
+[2015.04.16 at 02:00:20]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:22]Send ACK from P3 to P3
+[2015.04.16 at 02:00:22]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:27]Send ACK from P3 to P3
+[2015.04.16 at 02:00:27]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:29]Send ACK from P3 to P3
+[2015.04.16 at 02:00:29]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:35]Send ACK from P3 to P3
+[2015.04.16 at 02:00:35]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:36]Send ACK from P3 to P3
+[2015.04.16 at 02:00:36]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:43]Send ACK from P3 to P3
+[2015.04.16 at 02:00:43]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:44]Send ACK from P3 to P3
+[2015.04.16 at 02:00:44]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:50]Send ACK from P3 to P3
+[2015.04.16 at 02:00:50]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:51]Send ACK from P3 to P3
+[2015.04.16 at 02:00:51]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:57]Send ACK from P3 to P3
+[2015.04.16 at 02:00:57]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:00:58]Send ACK from P3 to P3
+[2015.04.16 at 02:00:58]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:05]Send ACK from P3 to P3
+[2015.04.16 at 02:01:05]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:06]Send ACK from P3 to P3
+[2015.04.16 at 02:01:06]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:12]Send ACK from P3 to P3
+[2015.04.16 at 02:01:12]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:13]Send ACK from P3 to P3
+[2015.04.16 at 02:01:13]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:20]Send ACK from P3 to P3
+[2015.04.16 at 02:01:20]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:21]Send ACK from P3 to P3
+[2015.04.16 at 02:01:21]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:27]Send ACK from P3 to P3
+[2015.04.16 at 02:01:27]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:29]Send ACK from P3 to P3
+[2015.04.16 at 02:01:29]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:35]Send ACK from P3 to P3
+[2015.04.16 at 02:01:35]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:36]Send ACK from P3 to P3
+[2015.04.16 at 02:01:36]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:42]Send ACK from P3 to P3
+[2015.04.16 at 02:01:42]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:44]Send ACK from P3 to P3
+[2015.04.16 at 02:01:44]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:50]Send ACK from P3 to P3
+[2015.04.16 at 02:01:50]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:52]Send ACK from P3 to P3
+[2015.04.16 at 02:01:52]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:58]Send ACK from P3 to P3
+[2015.04.16 at 02:01:58]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
+[2015.04.16 at 02:01:59]Send ACK from P3 to P3
+[2015.04.16 at 02:01:59]Sending Request: (process=P3, type=ACK, ACK status=false date: 1) to 169.254.151.252:10002
