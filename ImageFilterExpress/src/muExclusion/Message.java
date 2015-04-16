@@ -96,8 +96,8 @@ public class Message implements Comparable<Message>, Sendable {
         return true;
     }  
 
-    public int getClock() {
-        return clock.getTime();
+    public Clock getClock() {
+        return clock;
     }
 
     public void setClock(int clock) {

@@ -1,7 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ *
+ *
+ *
+ * @author mary, carlos, lheredia
+ *
  */
 package muExclusion;
 
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.PriorityQueue;
@@ -25,68 +28,47 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static muExclusion.Process.randomWait;
 import net.UDPConnector;
 import net.util.Clock;
+import net.Sendable;
 
-/**
- *
- * @author mary
- */
+//Process class 
 public class Process {
-
-    String Id;
-    String file;
-    /**
-     * Cola de solicitudes
-     */
-    private static final PriorityQueue <Message> list;
+    //Declaracion de variables
+    public String Id;
+    public final String IP;
+    public final int PORT;
+    private UDPConnector connector;
+    private String file;
+    private boolean listening;
+    private boolean inCS;
+    private int waitfor;  //inicializar con startlistening para que sea diferente el valor
+    private final SimpleDateFormat dateFormater;
+    private final boolean isSyncher;
+    private static final String ACK = "ACK";
+    private static final String RELEASE = "RELEASE";
+    private static final String REQUEST = "REQUEST";
+    private static final PriorityQueue<Message> list;
     private static final Set<Message> listACK;
     private static final List<Process> listProcess;
-    static{
+    private static final LinkedList<Sendable> listBuffer;
+    private static final List<Message> sentRequests;
+    private static final Clock clock;
+    private static final Random random;
+
+    //Inicialización de variables static
+    static {
         listACK = new HashSet<>();
         list = new PriorityQueue<>();
         listProcess = new ArrayList<>();
-        clock=new Clock(0);
-    }
-    boolean inCS;
-    private static final String ACK="ACK";
-    private static final String RELEASE="RELEASE";
-    private static final String REQUEST="REQUEST";
-    UDPConnector connector;
-    final String IP;
-    final int PORT;
-    private boolean listening;
-
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 59 * hash + Objects.hashCode(this.Id);
-        hash = 59 * hash + Objects.hashCode(this.IP);
-        hash = 59 * hash + this.PORT;
-        return hash;
+        listBuffer = new LinkedList<>();
+        clock = new Clock(0);
+        random = new Random(2000);
+        sentRequests = new ArrayList<>();
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Process other = (Process) obj;
-        if (!Objects.equals(this.Id, other.Id)) {
-            return false;
-        }
-        if (!Objects.equals(this.IP, other.IP)) {
-            return false;
-        }
-        if (this.PORT != other.PORT) {
-            return false;
-        }
-        return true;
-    }
-
+    //Constructores de la clase Process 
     private Process(RegistryCard card) {
         this.dateFormater = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
         this.Id = card.Id;
@@ -95,156 +77,112 @@ public class Process {
         isSyncher = false;
     }
 
-    private final boolean isSyncher;
-
     public Process(String id, String ip, int port, String syncIP, int syncPORT) {
         this.dateFormater = new SimpleDateFormat("yyyy.MM.dd 'at' HH:mm:ss");
         this.Id = id;
         this.file = "Processes.txt";
         createFile();
-        
         inCS = false;
         this.IP = ip;
         this.PORT = port;
-        
         connector = new UDPConnector(port);
-        
         System.out.println("Process " + this.Id + " running at: " + this.IP + ":" + this.PORT);
         addTarget(this);
         startListening(3);
-        
             //sync with already started processes
         randomWait();
         if (syncIP != null && syncPORT != 0) {
             isSyncher = false;
-            syncProcess(this, syncIP, syncPORT);
+            //syncProcess(this, syncIP, syncPORT);
         } else {
             isSyncher = true;
         }
         write();
-        //this.receiveRequest();
     }
 
-    public Message request() {
-        //Agregar request a su misma cola
-        list.forEach(e->getClock().receiveAction(e.getClock()));
-        
-        Message req = new Message(Id, REQUEST,getClock() );
-        list.offer(req);
-//        
-//        listProcess.stream().filter(
-//                (p) -> (!this.Id.equals(p.Id))
-//        ).forEach(
-//                (p) -> {
-//                    this.sendRequest(req, p.PORT, p.IP);
-//                    randomWait();
-//                }
-//        );
-        return req;
+    //Metodos de control de hilos
+    /**
+     *
+     * Inicia el hilo de sincronización con otros procesos con un número
+     *
+     * variable de procesos a registrar
+     *
+     *
+     *
+     * @param waitfor indica el número de procesos que debe contener la lista de
+     *
+     * procesos, una vez que se alcanza este número se termina el hilo de
+     *
+     * registro.
+     *
+     */
+    public void startListening(int waitfor) {
+        this.waitfor = waitfor;
+        startListening();
     }
-    private final SimpleDateFormat dateFormater;
 
     /**
-     * Este metodo recibe requests mientras la bandera este activada y las
-     * almacena en una cola de requests
+     *
+     * Inicia el hilo de sincronización con otros procesos
+     *
+     */
+    public void startListening() {
+        listening = true;
+        System.out.println("[ " + Id + " ACTION: ] listening...");
+        Producer producer = new Producer();
+        Consumer consumer = new Consumer();
+        Thread producerThread = new Thread(producer);
+        Thread consumerThread = new Thread(consumer);
+        producerThread.start();
+        consumerThread.start();
+    }
+
+    /**
+     *
+     * Finaliza el hilo de sincronización con otros procesos al      *
+     * actualizar el valor de listening a falso
+     *
+     */
+    public void stopListening() {
+        listening = false;
+    }
+
+    //Metodos Producer/Consumer
+    /**
+     *
+     * Este metodo es utilizado por la clase Producer/Consumer      *
+     * recibe el proceso y lo agrega al buffer
+     *
+     */
+    public synchronized void produce() {
+        //Recibe objeto y lo agrega al buffer(linkedlist)
+        Sendable remoteObject = connector.receive();
+        listBuffer.offer(remoteObject);
+    }
+    /**
+     *
+     * Este metodo es utilizado por la clase Producer/Consumer      *
+     * si el buffer no esta vacio obtiene el siguiente
+     *
+     * elemento a procesar
+     *
+     */
+    public synchronized void consume() {
+        if (!listBuffer.isEmpty()) {
+            Sendable tempRemoteObject = listBuffer.poll();
+            if (tempRemoteObject instanceof RegistryCard) {
+                registerProcess(tempRemoteObject);
+            } else if (tempRemoteObject instanceof Message) {
+                receiveRequest(tempRemoteObject);
+            }
+        }
+    }
+    /**
+     *
+     * Este metodo registra el proceso      *
      * @param remoteObject
-     */
-    public synchronized void receiveRequest(Object remoteObject) {
-       new Thread( () -> {
-        Message receivedRequest = (Message) remoteObject;
-        System.out.println(this.list);
-        System.out.println("[INFO: ] request received : "+receivedRequest+" in " + this.Id);
-        //Acción dependiendo del tipo de mensaje
-        switch (receivedRequest.type) {
-            //Solicitud de acceso a la CS
-            case REQUEST:
-                getClock().receiveAction(receivedRequest.getClock());
-                this.list.offer(receivedRequest);
-                System.out.println("["+this.Id+" ACTION] REQUEST received from "
-                        + receivedRequest.process );
-                sendResponse(receivedRequest);
-                break;
-            case ACK:
-                getClock().receiveAction(receivedRequest.getClock());
-                System.out.println("["+this.Id+" ACTION] ACK received from "
-                        + receivedRequest.process );
-                saveACK(receivedRequest);
-                break;
-            //Mensaje de release de la CS
-            case RELEASE:
-                getClock().receiveAction(receivedRequest.getClock());
-                System.out.println("["+this.Id+" ACTION] RELEASE received from "
-                        + receivedRequest.process ); 
-                if(!list.isEmpty())
-                    list.poll();
-                break;
-            }
-        }).start();
-    }
-
-    @Override
-    public String toString() {
-        return "Process{" + "Id=" + Id + ", IP=" + IP + ", PORT=" + PORT + '}';
-    }
-
-    public synchronized void sendRequest(Message req, int port, String ip) {
-        new Thread(() -> {
-            System.out.println("Sending Request: "+req+" to "+ip+":"+port);
-            connector.send(req, port, ip);
-        }).start();
-    }
-    private void createFile(){
-        Path f = Paths.get(file);
-        if(!Files.exists(f))
-            try {
-                Files.createFile(f);
-        } catch (IOException ex) {
-            Logger.getLogger(Process.class.getName()).log(Level.SEVERE, "File creation failed", ex);
-        }
-    }
-    /**
-     * *
-     * Actualizar un determinado archivo
      *
      */
-    public void update() {
-        write();
-
-    }
-
-    /**
-     * *
-     * Lee e imprime todas las lineas de un determinado archivo
-     *
-     */
-    public void read() {
-        Path f = Paths.get(file);
-        try  {
-            for (String line:Files.readAllLines(f)) {
-                System.out.println(line + "\n");
-            }
-        }catch(IOException e){
-            
-        }
-
-    }
-
-    /**
-     * *
-     * Escribir un timestamp en determinado archivo
-     *
-     */
-    public void write() {
-        Path f = Paths.get(file);
-        try (
-                BufferedWriter writter = Files.newBufferedWriter(f, StandardOpenOption.APPEND);) {
-            String text = "[" + Id + "]" + "[" + dateFormater.format(new Date()) + "]\n";
-            writter.append(text);
-        } catch (IOException ex) {
-            System.out.println(ex.getMessage());
-        }
-    }
-
     private void registerProcess(Object remoteObject) {
         if (listening) {
             new Thread(() -> {
@@ -261,101 +199,117 @@ public class Process {
                 }
                 if (!(listProcess.size() < waitfor)) {
                     System.out.println("# of processes quota reached: " + listProcess.size() + " stop waiting for processes");
-                    stopListening();                    
-                        System.out.print("Ready to start: ");
-//                        
-                        randomWait(4);
-                        requestAccessToCS();
-//                        startMonitorDaemon();
-                    
-                    
+                    stopListening();
+                    System.out.print("Ready to start: ");     
+                   randomWait(4);
+                    requestAccessToCS();
+                    startMonitorDaemon();
                 }
             }).start();
-            Thread status=new Thread(() -> {
+            Thread status = new Thread(() -> {
                 try (
-                            Scanner scanner = new Scanner(System.in);) {
-            
-                while (true) {
-                    String output=scanner.nextLine().toUpperCase();
-                    switch (output) {
-                        case "STATUS":
-                            System.out.println("ACK list: "+listACK);
-                            System.out.println("Queue: "+list);
-                            System.out.println("in CS: "+inCS);
-                            System.out.println("processes: "+listProcess);
-                            break;
-                        case "RESUME":
-                            resume();
-                            break;
-                        case "RELEASE":
-                            list.poll();
-                            break;
+                        Scanner scanner = new Scanner(System.in);) {
+                    while (true) {
+                        String output = scanner.nextLine().toUpperCase();
+                        switch (output) {
+                            case "STATUS":
+                                System.out.println("ACK list: " + listACK);
+                                System.out.println("Queue: " + list);
+                                System.out.println("in CS: " + inCS);
+                                System.out.println("processes: " + listProcess);
+                                break;
+                            case "RESUME":
+                                resume();
+                                break;
+                            case "RELEASE":
+                                list.poll();
+                                break;
+                        }
                     }
-                       }
-            }
+                }
             });
-             status.setPriority(Thread.MAX_PRIORITY);
+            status.setPriority(Thread.MAX_PRIORITY);
             status.start();
         } else {
             System.out.println("# of processes quota reached: " + listProcess.size() + " no more processes required");
         }
+
     }
-    private void requestAccessToCS(){
+
+    /**
+     *
+     * Este metodo recibe requests mientras la bandera este activada y las
+     *
+     * almacena en una cola de requests
+     *
+     * @param remoteObject
+     *
+     */
+    public void receiveRequest(Sendable remoteObject) {
+        //dejar thread 
+        new Thread(() -> {
+            Message receivedRequest = (Message) remoteObject;
+            System.out.println(this.list);
+            System.out.println("[INFO: ] request received : " + receivedRequest + " in " + this.Id);
+        //Acción dependiendo del tipo de mensaje
+            getClock().receiveAction(receivedRequest.getClock().getTime());
+            switch (receivedRequest.type) {
+            //Solicitud de acceso a la CS
+                case REQUEST:
+                    getClock().receiveAction(8);
+                    this.list.offer(receivedRequest);
+                    System.out.println("[" + this.Id + " ACTION] REQUEST received from "
+                            + receivedRequest.process);
+                    sendResponse(receivedRequest);
+                    break;
+                case ACK:
+                    System.out.println("[" + this.Id + " ACTION] ACK received from "
+                            + receivedRequest.process);
+
+                    saveACK(receivedRequest);
+                    break;
+            //Mensaje de release de la CS
+                case RELEASE:
+                    System.out.println("[" + this.Id + " ACTION] RELEASE received from "
+                            + receivedRequest.process);
+                    if (!list.isEmpty()) {
+                        list.poll();
+                    }
+                    break;
+            }
+        }).start();
+    }
+
+    //Metodos del algoritmo
+    public Message request() {
+        //Agregar request a su misma cola
+        list.forEach(e -> getClock().receiveAction(e.getClock().getTime()));
+        Message req = new Message(Id, REQUEST, getClock());
+        list.offer(req);
+        return req;
+    }
+
+    public synchronized void sendRequest(Message req, int port, String ip) {
+        new Thread(() -> {
+            System.out.println("Sending Request: " + req + " to " + ip + ":" + port);
+        }).start();
+    }
+
+    private void requestAccessToCS() {
         System.out.println("[ " + Id + " ][ACTION] Need access to Critic Section, sending request...");
         Message req = request();
         listProcess.stream().filter(
-            (p) -> (!this.equals(p))
+                (p) -> (!this.equals(p))
         ).forEach(
-            (p) -> {
-                sendRequest(req, p.PORT, p.IP);
-                randomWait();
-            }
+                (p) -> {
+                    sendRequest(req, p.PORT, p.IP);
+                    randomWait();
+                }
         );
     }
+
     public void addTarget(Process p) {
         listProcess.add(p);
-    }
-    private int waitfor = 3;
-
-    /**
-     * Inicia el hilo de sincronización con otros procesos con un número
-     * variable de procesos a registrar
-     *
-     * @param waitfor indica el número de procesos que debe contener la lista de
-     * procesos, una vez que se alcanza este número se termina el hilo de
-     * registro.
-     */
-    public void startListening(int waitfor) {
-        this.waitfor = waitfor;
-        startListening();
-    }
-
-    public void startListening() {
-        listening = true;
-        listenRequests();
-    }
-
-    public void stopListening() {
-        listening = false;
-    }
-
-    private void listenRequests() {
-
-        new Thread(() -> {
-
-            System.out.println("[ " + Id + " ACTION: ] listening...");
-            while (true) {
-                Object remoteObject = connector.receive();
-                //si se recibe un registro válido se continua el registro en un hilo por separado
-                //para permitir al metodo seguir escuchando por más request
-                if (remoteObject instanceof RegistryCard) {
-                    registerProcess(remoteObject);
-                } else if (remoteObject instanceof Message) {
-                    receiveRequest(remoteObject);
-                }
-
-            }
-        }).start();
     }
 
     private <T> List<T> cloneList(List<T> list) {
@@ -387,11 +341,362 @@ public class Process {
                             sendCard(p, p2.IP, p2.PORT);
                         }
                     });
-
                 }
         );
     }
 
+    /**
+     *
+     * *
+     *
+     * Enviar respuesta o agregar a la cola de requests
+     *
+     *
+     *
+     * @param receivedRequest
+     *
+     */
+    private synchronized void sendResponse(Message receivedRequest) {
+        //Si no esta en la CS enviar mensaje ACK
+        if (!this.inCS) {// && notOtherACK()) {
+            Message req = new Message(this.Id, ACK, receivedRequest.getClock());
+            String ip = "";
+            int port = -1;
+            receivedRequest.ACKsent = true;
+            //Buscar ip y puerto del proceso que envio el mensaje
+            for (Process p : listProcess) {
+                if (p.Id.equals(receivedRequest.process)) {
+                    ip = p.IP;
+                    port = p.PORT;
+                    break;
+                }
+            }
+            //Enviar ACK
+            System.out.println("Send ACK from "
+                    + this.Id + " to " + receivedRequest.process);
+            this.sendRequest(req, port, ip);
+        }
+    }
+    /**
+     *
+     * *
+     *
+     * Guardar ACK recibidos de los diferentes procesos y checar si todos los
+     *
+     * ACK han sido recibidos para la solicitud que esta en top y que es del
+     *
+     * proceso actual
+     *
+     *
+     *
+     * @param receivedRequest
+     *
+     */
+    private void saveACK(Message receivedRequest) {
+        if (!listACK.contains(receivedRequest)) {
+            listACK.add(receivedRequest);
+        }
+        //System.out.println("list of ack: "+listACK);
+        if (!list.isEmpty()) {
+            Message topRequest = list.peek();
+            System.out.println(topRequest);
+       // System.out.println("[save ACK]request queue: "+list+" top: "+topRequest);
+        //Si el top request no es el mismo proceso entonces no puede entrar
+        //en la CS
+            if (topRequest.process != this.Id) {
+                return;
+            }
+        } else {
+            System.out.println("ERROR lista vacia de requests");
+            return;
+        }
+        if (listACK.size() >= listProcess.size() - 1) {
+            //quitar los ACK en el lista de ACK
+            System.out.println("[INFO] all ACK received");
+            criticSection();
+            randomWait(3);
+            requestAccessToCS();
+        }
+    }
+
+    private void criticSection() {
+        this.inCS = true;
+        System.out.println("-----------------------------------------");
+        System.out.println("-----------------------------------------");
+        System.out.println("[INFO ]" + this.Id + " is entering Critic Section @ " + dateFormater.format(new Date()));
+        goToCS();
+        //quita su propia solicitud de su cola
+        System.out.println("[INFO ]" + this.Id + " is leaving Critic Section @ " + dateFormater.format(new Date()));
+        Message releasetmp;
+        //if(!list.isEmpty())
+        releasetmp = list.poll();
+        sendRelease(releasetmp.getClock());
+        this.inCS = false;
+        sendPendingACK();
+        System.out.println("-----------------------------------------");
+        System.out.println("-----------------------------------------");
+    }
+
+    /**
+     *
+     * *
+     *
+     * Ejecutar la CS.
+     *
+     *
+     *
+     * @throws InterruptedException
+     *
+     */
+    private void goToCS() {
+        //write,update,read
+//        int num = 1 + (int) (Math.random() * ((3 - 1) + 1));
+        Random r = new Random();
+        int num = r.nextInt(3) + 1;
+        switch (num) {
+            case 1:
+                System.out.println("[INFO] " + this.Id + " is reading the shared file");
+                read();
+                break;
+            case 2:
+                System.out.println("[INFO] " + this.Id + " is writing into the shared file");
+                write();
+                break;
+            case 3:
+                System.out.println("[INFO] " + this.Id + " is updating the shared file");
+                update();
+                break;
+        }
+        randomWait();
+    }
+
+    public static void randomWait() {
+        int wait = random.nextInt(500) + 500;
+        try {
+            Thread.sleep(wait);
+        } catch (InterruptedException e) {
+            System.out.println("ERROR:" + e.getMessage());
+        }
+    }
+
+    private static synchronized Clock getClock() {
+        return clock;
+    }
+
+    /**
+     *
+     * *
+     *
+     * Enviar mensaje de release a todos los procesos.
+     *
+     *
+     *
+     * @param topRequest
+     *
+     */
+    private void sendRelease(Clock clock) {
+        String ip;
+        int port;
+        listProcess.stream().filter(
+                p -> !(p.Id.equals(this.Id))
+        ).forEach(
+                p -> {
+                    System.out.println("Send Release from " + this.Id + " to " + p.Id);
+                    getClock().sendAction();
+                    this.sendRequest(new Message(this.Id, RELEASE, clock), p.PORT, p.IP);
+                }
+        );
+    }
+
+    /**
+     *
+     * *
+     *
+     * Enviar ACK pendiendientes despues de salir de la CS.
+     *
+     */
+    private void sendPendingACK() {
+        for (Message message : list) {
+            if (!message.ACKsent) {
+                System.out.println("[ INFO ] Sending pending ACK to " + message.process);
+                sendResponse(message);
+                message.ACKsent = true;
+                //break;
+            }
+        }
+    }
+
+    private void resume() {
+        if (!list.isEmpty()) {
+            Message message = list.peek();
+            if ((message.process.equals(this.Id)) && (listACK.size() >= listProcess.size() - 1)) {
+                System.out.println("[INFO] all ACK received");
+                criticSection();
+                randomWait(3);
+                requestAccessToCS();
+            }
+        }
+    }
+
+    private Process cardToProcess(RegistryCard card) {
+        return new Process(card);
+    }
+
+    private RegistryCard processToCard(Process process) {
+        return new RegistryCard(process);
+    }
+
+    /**
+     *
+     * Checar si ya se envio un ACK en el queue de mensajes, ya que no se puede
+     *
+     * enviar otro ACK hasta no recibir el release del proceso al que se le      *
+     * envio el ACK
+     *
+     * @return false - Si se envio un ACK. true - No hay mensajes con ACK
+     *
+     */
+    private boolean notOtherACK() {
+        for (Message message : list) {
+            if (message.ACKsent) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void startMonitorDaemon() {
+        new Thread(
+                () -> {
+                    while (true) {
+                        randomWait(10);
+//                        resume();
+                        Message curMessage = list.peek();
+                        if (!Objects.isNull(curMessage) && curMessage.process.equals(this.Id)) {
+                            sendResponse(curMessage);
+                        }
+                   // sendPendingACK();
+                    }
+                }
+        ).start();
+    }
+
+    private void randomWait(int i) {
+        for (; i > 0; i--) {
+            randomWait();
+        }
+    }
+
+    //Metodos para el manejo de archivos
+    /**
+     *
+     * *
+     *
+     * Crea un determinado archivo
+     *
+     *
+     *
+     */
+    private void createFile() {
+        Path f = Paths.get(file);
+        if (!Files.exists(f)) {
+            try {
+                Files.createFile(f);
+            } catch (IOException ex) {
+                Logger.getLogger(Process.class.getName()).log(Level.SEVERE, "File creation failed", ex);
+            }
+        }
+    }
+
+    /**
+     *
+     * *
+     *
+     * Actualizar un determinado archivo
+     *
+     *
+     *
+     */
+    public void update() {
+        write();
+    }
+
+    /**
+     *
+     * *
+     *
+     * Lee e imprime todas las lineas de un determinado archivo
+     *
+     *
+     *
+     */
+    public void read() {
+        Path f = Paths.get(file);
+        try {
+            for (String line : Files.readAllLines(f)) {
+                System.out.println(line + "\n");
+            }
+        } catch (IOException e) {
+        }
+    }
+
+    /**
+     *
+     * *
+     *
+     * Escribir un timestamp en determinado archivo
+     *
+     *
+     *
+     */
+    public void write() {
+        Path f = Paths.get(file);
+        try (
+                BufferedWriter writter = Files.newBufferedWriter(f, StandardOpenOption.APPEND);
+                ) {
+            String text = "[" + Id + "]" + "[" + dateFormater.format(new Date()) + "]\n";
+            writter.append(text);
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 59 * hash + Objects.hashCode(this.Id);
+        hash = 59 * hash + Objects.hashCode(this.IP);
+        hash = 59 * hash + this.PORT;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Process other = (Process) obj;
+        if (!Objects.equals(this.Id, other.Id)) {
+            return false;
+        }
+        if (!Objects.equals(this.IP, other.IP)) {
+            return false;
+        }
+        if (this.PORT != other.PORT) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Process{" + "Id=" + Id + ", IP=" + IP + ", PORT=" + PORT + '}';
+    }
+
+    //main() clase process
     public static void main(String args[]) throws IOException {
         String processId;
         int port;
@@ -418,301 +723,29 @@ public class Process {
             Process process = new Process(processId, IP.getHostAddress(), port, syncIP, syncPORT);
         } else {
             System.err.println("Indicar el identificador del proceso [P1,P2,P3]  el puerto [10000-10003] y el host de sincronizacion");
-
-        }
-    }
-    private static final Clock clock;
-    /**
-     * *
-     * Enviar respuesta o agregar a la cola de requests
-     *
-     * @param receivedRequest
-     */
-    private synchronized void sendResponse(Message receivedRequest) {
-        //Si no esta en la CS enviar mensaje ACK
-        if (!this.inCS){// && notOtherACK()) {
-            
-            Message req = new Message(this.Id, ACK,getClock());
-            
-            String ip="";
-            int port=-1;
-            receivedRequest.ACKsent=true;
-            //Buscar ip y puerto del proceso que envio el mensaje
-            for (Process p : listProcess) {
-                if (p.Id.equals(receivedRequest.process)) {
-                    ip = p.IP;
-                    port = p.PORT;
-                    break;
-                }
-            }
-            //Enviar ACK
-            System.out.println("Send ACK from "
-                        + this.Id + " to " + receivedRequest.process);
-            this.sendRequest(req, port, ip);
         }
     }
 
-    /**
-     * *
-     * Guardar ACK recibidos de los diferentes procesos y checar si todos los
-     * ACK han sido recibidos para la solicitud que esta en top y que es del
-     * proceso actual
-     *
-     * @param receivedRequest
-     */
-    private void saveACK(Message receivedRequest) {
-        if(!listACK.contains(receivedRequest))
-            listACK.add(receivedRequest);
-        //System.out.println("list of ack: "+listACK);
-        if(!list.isEmpty()){
-        Message topRequest =list.peek();
-            System.out.println(topRequest);
-       // System.out.println("[save ACK]request queue: "+list+" top: "+topRequest);
-        //Si el top request no es el mismo proceso entonces no puede entrar
-        //en la CS
-        if (topRequest.process != this.Id) {
-            return;
-        }
-        }
-        else
-        {
-            System.out.println("ERROR lista vacia de requests");
-            return;
-        }
-       // System.out.println("Este proceso si es el top de la cola. ACK# " +  listACK.size());
-        //Todos los ACK han sido recibidos, el top en el query es el mismo 
-        //proceso, por lo tanto se puede entrar en la CS
-        
-        /*System.out.println("ACK list: "+listACK);
-                            System.out.println("Queue: "+list);
-                            System.out.println("in CS: "+inCS);*/
-        if (listACK.size()>=listProcess.size()-1) {
-            //quitar los ACK en el lista de ACK
-            System.out.println("[INFO] all ACK received");
-                criticSection();
-                randomWait(3);
-                requestAccessToCS();
-
-        }
-    }
-    private void criticSection(){
-        this.inCS = true;
-                System.out.println("-----------------------------------------");
-                System.out.println("-----------------------------------------");
-                System.out.println("[INFO ]" + this.Id + " is entering Critic Section @ "+dateFormater.format(new Date()));
-                goToCS();
-                //quita su propia solicitud de su cola
-                System.out.println("[INFO ]" + this.Id + " is leaving Critic Section @ "+dateFormater.format(new Date()));
-                
-                if(!list.isEmpty())
-                    list.poll();
-                
-                sendRelease();
-                this.inCS=false;
-                sendPendingACK();
-                System.out.println("-----------------------------------------");
-                System.out.println("-----------------------------------------");
-    }
-    /**
-     * *
-     * Ejecutar la CS.
-     *
-     * @throws InterruptedException
-     */
-    private void goToCS() {
-        //write,update,read
-//        int num = 1 + (int) (Math.random() * ((3 - 1) + 1));
-        Random r=new Random();
-        int num=r.nextInt(3)+1;
-        switch (num) {
-            case 1:
-                System.out.println("[INFO] "+this.Id+" is reading the shared file");
-                read();
-                break;
-            case 2:
-                System.out.println("[INFO] "+this.Id+" is writing into the shared file");
-                write();
-                break;
-            case 3:
-                System.out.println("[INFO] "+this.Id+" is updating the shared file");
-                update();
-                break;
-        }
-        randomWait();
-    }
-    private static final Random random;
-    static{random=new Random(800);}
-    public static void randomWait(){
-        int wait=random.nextInt(500)+300;
-        try{
-            Thread.sleep(wait);
-        }catch(InterruptedException e){
-            System.out.println("ERROR:" + e.getMessage());
-        }
-    }
-    private static synchronized Clock getClock(){
-        return clock;
-    }
-    /**
-     * *
-     * Enviar mensaje de release a todos los procesos.
-     *
-     * @param topRequest
-     */
-    private void sendRelease() {
-
-        String ip;
-        int port;
-        listProcess.stream().filter(
-            p -> !(p.Id.equals(this.Id))
-        ).forEach( 
-            p->{
-                System.out.println("Send Release from " + this.Id + " to " + p.Id);
-                getClock().sendAction();
-                this.sendRequest(new Message(this.Id, RELEASE,getClock()), p.PORT, p.IP);
-            }
-        );
-        
-//        for (Process p : listProcess) {
-//            if(!this.Id.equals(p.Id)){
-//                ip = p.IP;
-//                port = p.PORT;
-//                Message rel = new Message(this.Id, RELEASE);
-//                //rel.setFirstMsg(topRequest);
-//                System.out.println("Send Release from " + this.Id + " to " + p.Id);
-//                this.sendRequest(rel, port, ip);
-//            }
-//        }
-    }
-
-    /**
-     * Mensaje de release de parte del proceso que entro en la CS, este proceso
-     * quitara el request en la cola de los procesos que reciban este mensaje.
-     *
-     * @param receivedRequest
-     */
-
-
-    /**
-     * *
-     * Enviar ACK pendiendientes despues de salir de la CS.
-     */
-    private void sendPendingACK() {
-        for (Message message : list) {
-            if(!message.ACKsent){
-                System.out.println("[ INFO ] Sending pending ACK to "+ message.process);
-                sendResponse(message);
-                message.ACKsent = true;
-                //break;
+    //Clase Interna Producer
+    class Producer implements Runnable {
+        @Override
+        public void run() {
+            while (listening) {
+                produce();
+                randomWait(2);
             }
         }
     }
-    private void resume() {
-        if(!list.isEmpty()){
-        Message message=list.peek();
-        if((message.process.equals(this.Id))&&(listACK.size()>=listProcess.size()-1)){
-            System.out.println("[INFO] all ACK received");
-                criticSection();
-                randomWait(3);
-                requestAccessToCS();
-        }
-        }
-//        Message message=list.peek();
-//        String ip="";
-//        int port=-1;
-//        if(!(Objects.isNull(message))&&!(this.Id.equals(message.process))){
-//            Message req = new Message(this.Id, ACK,getClock());
-//            for (Process p : listProcess) {
-//                        if (p.Id.equals(message.process)) {
-//                            ip = p.IP;
-//                            port = p.PORT;
-//                            break;
-//                        }
-//                    }
-//           
-//            this.sendRequest(req, port, ip);
-//        }
-//        for (Message message : list) {
-//            if(!message.ACKsent){
-//                System.out.println("[ INFO ] Sending pending ACK to "+ message.process);
-//                if (!this.inCS ) {
-//            
-//                    Message req = new Message(this.Id, ACK);
-//
-//                    String ip="";
-//                    int port=-1;
-//                    message.ACKsent=true;
-//                    //Buscar ip y puerto del proceso que envio el mensaje
-//                    for (Process p : listProcess) {
-//                        if (p.Id.equals(message.process)) {
-//                            ip = p.IP;
-//                            port = p.PORT;
-//                            break;
-//                        }
-//                    }
-//            //Enviar ACK
-//            System.out.println("Send ACK from "
-//                        + this.Id + " to " + message.process);
-//            this.sendRequest(req, port, ip);
-//        }
-//                message.ACKsent = true;
-//                break;
-//            }
-//        }
-    }
-    private Process cardToProcess(RegistryCard card) {
-        return new Process(card);
-    }
 
-    private RegistryCard processToCard(Process process) {
-        return new RegistryCard(process);
-    }
+    //Clase Interna Consumer  
+    class Consumer implements Runnable {
 
-    /**
-     * Checar si ya se envio un ACK en el queue de mensajes, ya que no se puede
-     * enviar otro ACK hasta no recibir el release del proceso al que se le 
-     * envio el ACK
-     * @return false - Si se envio un ACK. true - No hay mensajes con ACK
-     */
-    private boolean notOtherACK() {
-        for (Message message : list) 
-            if(message.ACKsent)
-                return false;
-        return true;
-    }
-
-    private void startMonitorDaemon() {
-        new Thread(
-            ()->{
-                while(true){
-                    randomWait(10);
-                        resume();
-                }
+        @Override
+        public void run() {
+            while (listening) {
+                consume();
+                randomWait(2);
             }
-        ).start();
-    }
-
-    private void randomWait(int i) {
-        for(;i>0;i--){
-            randomWait();
         }
-    }    
-//    private boolean allACKreceived() {
-//        List<Integer> index = new ArrayList<>();
-//        for (Process p : listProcess) {
-//            int i = listACK. indexOf(p);
-//                if(i!=-1)
-//                index.add(i);
-//        }
-//        
-//        if(index.size()== listProcess.size()-1){
-//            //System.out.println("#ACK" +listACK.size());
-//            for (int i = index.size()-1; i >= 0; i--) 
-//                listACK.remove((int)index.get(i));
-//            //System.out.println("#ACK" +listACK.size());
-//            return true;
-//        }
-//
-//        return false;
-//    }
+    }
 }
